@@ -438,9 +438,11 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
-/* ── Toast ────────────────────────────────────── */
 .btn-refresh--danger { color: var(--neg) !important; border-color: rgba(224,92,92,0.3) !important; }
 .btn-refresh--danger:hover { background: rgba(224,92,92,0.1) !important; }
+
+/* ── Toast ────────────────────────────────────── */
+.toast {
   position: fixed;
   bottom: 24px; right: 24px;
   background: var(--bg3);
@@ -607,3 +609,126 @@ body {
 
 .btn-ghost--danger { color: var(--neg) !important; }
 .btn-ghost--danger:hover { background: rgba(224,92,92,0.1) !important; }
+
+/* ── Formulário melhorado ─────────────────────── */
+.form-card { max-width: 720px; }
+.form-group { margin-bottom: 0; flex: 1; min-width: 0; }
+.form-row { display: flex; gap: 12px; margin-bottom: 16px; align-items: flex-end; }
+
+/* Secção do formulário com título */
+.form-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  background: var(--bg);
+}
+.form-section-title {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+}
+
+/* Selector de moeda destacado */
+.input-with-flag { position: relative; }
+select.input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b90a0' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+  cursor: pointer;
+}
+select.input option { background: var(--bg2); color: var(--text); }
+
+/* Moeda badge inline */
+.moeda-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(91,141,238,0.12);
+  border: 1px solid rgba(91,141,238,0.25);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+  margin-left: 6px;
+  font-family: var(--mono);
+}
+
+/* Grupo qty + moeda + preço lado a lado */
+.form-row-prices {
+  display: grid;
+  grid-template-columns: 100px 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: end;
+}
+
+/* Label com hint */
+.label-hint {
+  font-size: 10px;
+  color: var(--text3);
+  font-weight: 400;
+  margin-left: 4px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Input número com símbolo moeda */
+.input-prefix-wrap { position: relative; }
+.input-prefix {
+  position: absolute;
+  left: 10px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: var(--text3);
+  pointer-events: none;
+  font-family: var(--mono);
+}
+.input-prefix + .input { padding-left: 24px; }
+
+/* Preview melhorado */
+.form-preview {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+.preview-title {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+.preview-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text2);
+}
+.preview-row:last-child { border-bottom: none; padding-bottom: 0; }
+.preview-row span:last-child {
+  font-family: var(--mono);
+  font-weight: 500;
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* Divisor no formulário */
+.form-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 18px 0;
+}
