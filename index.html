@@ -235,12 +235,32 @@
           </div>
         </div>
         <div class="form-row" id="row-qty-price">
-          <div class="form-group">
+          <div class="form-group" style="max-width:120px">
             <label class="label" for="f-qty">Quantidade</label>
             <input class="input" id="f-qty" type="number" step="any" placeholder="ex: 10" />
           </div>
+          <div class="form-group" style="max-width:160px">
+            <label class="label" for="f-moeda">Moeda de compra</label>
+            <select class="input" id="f-moeda">
+              <option value="EUR">€ EUR</option>
+              <option value="USD">$ USD</option>
+              <option value="GBP">£ GBP</option>
+              <option value="GBX">p GBX (pence)</option>
+              <option value="JPY">¥ JPY</option>
+              <option value="CHF">₣ CHF</option>
+              <option value="CAD">$ CAD</option>
+              <option value="AUD">$ AUD</option>
+              <option value="BRL">R$ BRL</option>
+              <option value="SEK">kr SEK</option>
+              <option value="NOK">kr NOK</option>
+              <option value="DKK">kr DKK</option>
+              <option value="HKD">HK$ HKD</option>
+              <option value="SGD">S$ SGD</option>
+              <option value="CNY">¥ CNY</option>
+            </select>
+          </div>
           <div class="form-group">
-            <label class="label" for="f-preco-medio">Preço médio (€)</label>
+            <label class="label" for="f-preco-medio">Preço médio <span id="label-moeda-compra" style="color:var(--accent);font-weight:600">€</span></label>
             <input class="input" id="f-preco-medio" type="number" step="any" placeholder="ex: 150,00" />
           </div>
           <div class="form-group">
@@ -287,7 +307,27 @@
         </div>
         <div class="form-row" id="edit-row-normal">
           <div class="form-group"><label class="label">Quantidade</label><input class="input" id="edit-qty" type="number" step="any" /></div>
-          <div class="form-group"><label class="label">Preço médio (€)</label><input class="input" id="edit-preco-medio" type="number" step="any" /></div>
+          <div class="form-group">
+            <label class="label">Moeda de compra</label>
+            <select class="input" id="edit-moeda">
+              <option value="EUR">€ EUR</option>
+              <option value="USD">$ USD</option>
+              <option value="GBP">£ GBP</option>
+              <option value="GBX">p GBX (pence)</option>
+              <option value="JPY">¥ JPY</option>
+              <option value="CHF">₣ CHF</option>
+              <option value="CAD">$ CAD</option>
+              <option value="AUD">$ AUD</option>
+              <option value="BRL">R$ BRL</option>
+              <option value="SEK">kr SEK</option>
+              <option value="NOK">kr NOK</option>
+              <option value="DKK">kr DKK</option>
+              <option value="HKD">HK$ HKD</option>
+              <option value="SGD">S$ SGD</option>
+              <option value="CNY">¥ CNY</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="label">Preço médio</label><input class="input" id="edit-preco-medio" type="number" step="any" /></div>
           <div class="form-group"><label class="label">Preço atual (€)</label><input class="input" id="edit-preco-atual" type="number" step="any" /></div>
         </div>
         <div class="form-row" id="edit-row-cash" style="display:none">
