@@ -25,13 +25,19 @@
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
         Ativos
       </a>
+      <a href="#" class="nav-item" data-page="analise">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        Análise IA
+      </a>
       <a href="#" class="nav-item" data-page="adicionar">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         Adicionar ativo
       </a>
     </nav>
     <div class="sidebar-footer">
-      <span id="last-update">—</span>
+      <div id="last-update">—</div>
+      <button class="btn-refresh" id="btn-refresh-all" title="Atualizar preços">↻ Atualizar preços</button>
+      <button class="btn-refresh btn-refresh--danger" id="btn-clear-key" title="Apagar chave API guardada" style="margin-top:6px">✕ Apagar chave IA</button>
     </div>
   </aside>
 
@@ -47,7 +53,6 @@
         </div>
       </header>
 
-      <!-- Métricas -->
       <div class="metrics-grid">
         <div class="metric-card accent">
           <div class="metric-label">Valor total</div>
@@ -71,7 +76,6 @@
         </div>
       </div>
 
-      <!-- Gráficos -->
       <div class="charts-row">
         <div class="card chart-card">
           <div class="card-header">
@@ -101,7 +105,6 @@
         </div>
       </div>
 
-      <!-- Top posições -->
       <div class="card">
         <div class="card-header">
           <span class="card-title">Posições</span>
@@ -116,7 +119,8 @@
               <tr>
                 <th>Ativo</th>
                 <th>Tipo</th>
-                <th class="right">Valor atual</th>
+                <th class="right">Preço atual</th>
+                <th class="right">Valor</th>
                 <th class="right">Ganho / Perda</th>
                 <th class="right">Peso</th>
               </tr>
@@ -136,7 +140,6 @@
         </div>
         <button class="btn btn-primary" data-page="adicionar">+ Adicionar</button>
       </header>
-
       <div class="card">
         <div id="ativos-empty" class="empty-state">
           <p>Ainda não tens ativos.<br><a href="#" class="link" data-page="adicionar">Adiciona o primeiro →</a></p>
@@ -148,7 +151,8 @@
               <th>Tipo</th>
               <th class="right">Qtd.</th>
               <th class="right">Preço médio</th>
-              <th class="right">Valor atual</th>
+              <th class="right">Preço atual</th>
+              <th class="right">Valor</th>
               <th class="right">Ganho / Perda</th>
               <th class="right">Peso</th>
               <th></th>
@@ -156,6 +160,39 @@
           </thead>
           <tbody id="ativos-tbody"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- PAGE: ANÁLISE IA -->
+    <div id="page-analise" class="page">
+      <header class="page-header">
+        <div>
+          <h1 class="page-title">Análise IA</h1>
+          <p class="page-sub">O Claude analisa o teu portfolio e dá sugestões</p>
+        </div>
+      </header>
+
+      <div class="card ai-card">
+        <div class="ai-header">
+          <div class="ai-icon">◈</div>
+          <div>
+            <div class="ai-title">Análise do portfolio</div>
+            <div class="ai-sub">Powered by Claude · Os dados ficam apenas no teu browser</div>
+          </div>
+          <button class="btn btn-primary" id="btn-analisar">Analisar agora</button>
+        </div>
+
+        <div id="ai-empty" class="empty-state">
+          <p>Clica em "Analisar agora" para receber uma análise detalhada do teu portfolio.<br>
+          A IA vai avaliar a tua diversificação, riscos e oportunidades.</p>
+        </div>
+
+        <div id="ai-loading" style="display:none" class="ai-loading">
+          <div class="ai-spinner"></div>
+          <span>A analisar o teu portfolio...</span>
+        </div>
+
+        <div id="ai-result" style="display:none" class="ai-result"></div>
       </div>
     </div>
 
@@ -182,7 +219,10 @@
         <div class="form-row">
           <div class="form-group">
             <label class="label" for="f-ticker">Ticker / Nome</label>
-            <input class="input" id="f-ticker" type="text" placeholder="ex: AAPL, VWCE, BTC" />
+            <div style="position:relative">
+              <input class="input" id="f-ticker" type="text" placeholder="ex: AAPL, VWCE, BTC-USD" />
+              <button class="btn-fetch-price" id="btn-fetch-price" title="Buscar preço atual">↓ Preço</button>
+            </div>
           </div>
           <div class="form-group">
             <label class="label" for="f-nome">Nome completo</label>
@@ -201,7 +241,7 @@
           </div>
           <div class="form-group">
             <label class="label" for="f-preco-atual">Preço atual (€)</label>
-            <input class="input" id="f-preco-atual" type="number" step="any" placeholder="ex: 178,00" />
+            <input class="input" id="f-preco-atual" type="number" step="any" placeholder="auto ou manual" />
           </div>
         </div>
 
@@ -219,7 +259,7 @@
         <div class="form-preview" id="form-preview" style="display:none">
           <div class="preview-row"><span>Valor investido</span><span id="prev-investido">—</span></div>
           <div class="preview-row"><span>Valor atual</span><span id="prev-atual">—</span></div>
-          <div class="preview-row"><span>Ganho / Perda</span><span id="prev-gl" class="pos">—</span></div>
+          <div class="preview-row"><span>Ganho / Perda</span><span id="prev-gl">—</span></div>
         </div>
 
         <div class="form-actions">
