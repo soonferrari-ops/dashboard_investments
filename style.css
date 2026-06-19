@@ -744,3 +744,34 @@ select.input {
   cursor: pointer;
 }
 select.input option { background: var(--bg2); color: var(--text); }
+
+/* ── Importar ─────────────────────────────────── */
+.upload-zone {
+  border: 2px dashed var(--border2);
+  border-radius: var(--radius);
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--bg);
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--accent);
+  background: rgba(91,141,238,0.05);
+}
+.upload-icon { font-size: 32px; margin-bottom: 10px; }
+.upload-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.upload-sub { font-size: 12px; color: var(--text2); }
+
+.import-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.import-table th { font-size: 11px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 8px; border-bottom: 1px solid var(--border); text-align: left; }
+.import-table td { padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.import-table tr:last-child td { border-bottom: none; }
+.import-table .input { padding: 6px 8px; font-size: 12px; height: 32px; }
+.import-row-skip { opacity: 0.4; }
+.btn-skip { background: none; border: 1px solid var(--border); color: var(--text3); font-size: 11px; padding: 3px 8px; border-radius: 4px; cursor: pointer; }
+.btn-skip:hover { color: var(--neg); border-color: var(--neg); }
+.btn-skip.skipped { color: var(--neg); border-color: var(--neg); }
+.import-status { font-size: 11px; padding: 2px 7px; border-radius: 10px; }
+.import-status.ok { background: rgba(76,175,130,0.15); color: var(--pos); }
+.import-status.warn { background: rgba(230,161,64,0.15); color: var(--gold); }

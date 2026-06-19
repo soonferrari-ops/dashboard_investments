@@ -429,6 +429,226 @@ document.getElementById('btn-apagar').addEventListener('click',()=>{
 // ── Toast ──────────────────────────────────────────────────────────
 function toast(msg){let t=document.querySelector('.toast');if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t);}t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
 
+
+// ── Importar screenshot ────────────────────────────────────────────
+let selectedBroker = 'Trading 212';
+let importImageBase64 = null;
+let importPositions = [];
+
+document.querySelectorAll('[data-broker]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-broker]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedBroker = btn.dataset.broker;
+  });
+});
+
+const uploadZone = document.getElementById('upload-zone');
+const imgUpload = document.getElementById('img-upload');
+
+uploadZone?.addEventListener('click', () => imgUpload.click());
+uploadZone?.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone?.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone?.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('drag-over'); if(e.dataTransfer.files[0]) handleImageFile(e.dataTransfer.files[0]); });
+imgUpload?.addEventListener('change', e => { if(e.target.files[0]) handleImageFile(e.target.files[0]); });
+
+function handleImageFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    importImageBase64 = e.target.result.split(',')[1];
+    document.getElementById('img-preview').src = e.target.result;
+    document.getElementById('img-preview-wrap').style.display = 'block';
+    document.getElementById('upload-zone').style.display = 'none';
+    document.getElementById('import-actions').style.display = 'block';
+    document.getElementById('import-result').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+document.getElementById('btn-nova-imagem')?.addEventListener('click', () => {
+  importImageBase64 = null;
+  importPositions = [];
+  document.getElementById('img-preview-wrap').style.display = 'none';
+  document.getElementById('upload-zone').style.display = 'block';
+  document.getElementById('import-actions').style.display = 'none';
+  document.getElementById('import-result').style.display = 'none';
+  document.getElementById('img-upload').value = '';
+});
+
+document.getElementById('btn-importar-analisar')?.addEventListener('click', async () => {
+  if (!importImageBase64) { toast('Faz upload de uma imagem primeiro'); return; }
+  if (!getApiKey()) {
+    const chave = prompt('Introduz a tua chave API da Anthropic (começa por sk-ant-):\n\nFica guardada apenas no teu browser.');
+    if (!chave || !chave.trim().startsWith('sk-ant-')) { toast('Chave inválida'); return; }
+    localStorage.setItem(API_KEY_STORAGE, chave.trim());
+    toast('✓ Chave guardada');
+  }
+
+  document.getElementById('import-loading').style.display = 'flex';
+  document.getElementById('import-actions').style.display = 'none';
+  document.getElementById('import-result').style.display = 'none';
+
+  const prompt = `Analisa esta screenshot de ${selectedBroker} e extrai todas as posições de investimento visíveis.
+
+Para cada posição, devolve um JSON array com este formato exacto:
+[
+  {
+    "ticker": "AAPL",
+    "nome": "Apple Inc.",
+    "tipo": "Ação",
+    "qty": 10.5,
+    "precoMedio": 150.23,
+    "moeda": "USD"
+  }
+]
+
+Regras:
+- "tipo" deve ser: "Ação", "ETF", "Cripto" ou "Cash"
+- "ticker" deve ser o símbolo de bolsa (ex: AAPL, VWCE, BTC)
+- "moeda" deve ser a moeda em que o preço médio está (USD, EUR, GBP, GBX, etc)
+- "precoMedio" é o preço médio de compra (average price / avg cost)
+- Se não conseguires determinar um campo, usa null
+- Devolve APENAS o JSON, sem texto adicional, sem markdown, sem \`\`\``;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': getApiKey(),
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/png', data: importImageBase64 } },
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '[]';
+    let positions = [];
+    try {
+      const clean = text.replace(/```json|```/g, '').trim();
+      positions = JSON.parse(clean);
+    } catch { toast('Não foi possível ler as posições. Tenta com uma imagem mais clara.'); }
+
+    importPositions = positions;
+    document.getElementById('import-loading').style.display = 'none';
+    document.getElementById('import-result').style.display = 'block';
+    document.getElementById('import-actions').style.display = 'block';
+    renderImportTable(positions);
+
+  } catch(err) {
+    document.getElementById('import-loading').style.display = 'none';
+    document.getElementById('import-actions').style.display = 'block';
+    toast('Erro ao contactar a IA.');
+  }
+});
+
+function renderImportTable(positions) {
+  const wrap = document.getElementById('import-table-wrap');
+  const title = document.getElementById('import-result-title');
+  const notFound = document.getElementById('import-not-found');
+
+  if (!positions || positions.length === 0) {
+    wrap.innerHTML = '<div class="empty-state"><p>Não foram detetadas posições.<br>Tenta com uma imagem mais clara ou com a tabela de posições visível.</p></div>';
+    title.textContent = 'Nenhuma posição detetada';
+    return;
+  }
+
+  title.textContent = `${positions.length} posição(ões) detetada(s)`;
+  const MOEDAS = ['EUR','USD','GBP','GBX','JPY','CHF','CAD','AUD','BRL','SEK','NOK','DKK','HKD','SGD','CNY'];
+  const TIPOS = ['Ação','ETF','Cripto','Cash'];
+
+  wrap.innerHTML = `
+    <table class="import-table">
+      <thead><tr>
+        <th>Ticker</th><th>Nome</th><th>Tipo</th><th>Qtd</th><th>Preço médio</th><th>Moeda</th><th></th>
+      </tr></thead>
+      <tbody>
+        ${positions.map((p, i) => `
+          <tr id="import-row-${i}">
+            <td><input class="input" id="imp-ticker-${i}" value="${p.ticker||''}" placeholder="AAPL" style="width:80px" /></td>
+            <td><input class="input" id="imp-nome-${i}" value="${p.nome||''}" placeholder="Nome" style="width:140px" /></td>
+            <td>
+              <select class="input" id="imp-tipo-${i}" style="width:90px">
+                ${TIPOS.map(t => `<option value="${t}" ${p.tipo===t?'selected':''}>${t}</option>`).join('')}
+              </select>
+            </td>
+            <td><input class="input" id="imp-qty-${i}" value="${p.qty||''}" type="number" step="any" style="width:80px" /></td>
+            <td><input class="input" id="imp-pm-${i}" value="${p.precoMedio||''}" type="number" step="any" style="width:90px" /></td>
+            <td>
+              <select class="input" id="imp-moeda-${i}" style="width:80px">
+                ${MOEDAS.map(m => `<option value="${m}" ${(p.moeda||'EUR')===m?'selected':''}>${m}</option>`).join('')}
+              </select>
+            </td>
+            <td><button class="btn-skip" data-skip="${i}" title="Ignorar esta posição">Ignorar</button></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+
+  document.querySelectorAll('[data-skip]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = btn.dataset.skip;
+      const row = document.getElementById(`import-row-${i}`);
+      if (btn.classList.contains('skipped')) {
+        btn.classList.remove('skipped'); btn.textContent = 'Ignorar'; row.classList.remove('import-row-skip');
+      } else {
+        btn.classList.add('skipped'); btn.textContent = 'Ignorado'; row.classList.add('import-row-skip');
+      }
+    });
+  });
+}
+
+document.getElementById('btn-import-guardar')?.addEventListener('click', async () => {
+  const positions = importPositions;
+  if (!positions || positions.length === 0) return;
+  let saved = 0, skipped = 0;
+  const btn = document.getElementById('btn-import-guardar');
+  btn.textContent = 'A guardar...';
+
+  for (let i = 0; i < positions.length; i++) {
+    const skipBtn = document.querySelector(`[data-skip="${i}"]`);
+    if (skipBtn?.classList.contains('skipped')) { skipped++; continue; }
+
+    const ticker = document.getElementById(`imp-ticker-${i}`)?.value.trim().toUpperCase();
+    const nome = document.getElementById(`imp-nome-${i}`)?.value.trim();
+    const tipo = document.getElementById(`imp-tipo-${i}`)?.value;
+    const qty = parseFloat(document.getElementById(`imp-qty-${i}`)?.value);
+    const pm = parseFloat(document.getElementById(`imp-pm-${i}`)?.value);
+    const moeda = document.getElementById(`imp-moeda-${i}`)?.value || 'EUR';
+
+    if (!ticker || !qty || !pm) continue;
+
+    const fxRate = moeda === 'GBX' ? (await getEurRate('GBP')) / 100 : await getEurRate(moeda);
+    const precoMedioEur = Math.round(pm * fxRate * 10000) / 10000;
+
+    // Tentar buscar preço atual
+    const precoAtual = await fetchPrice(ticker) || precoMedioEur;
+
+    currentP().ativos.push({
+      tipo, ticker, nome: nome || ticker,
+      qty, moedaCompra: moeda, precoMedioOriginal: pm,
+      precoMedio: precoMedioEur, precoAtual
+    });
+    saved++;
+  }
+
+  saveAtivos();
+  btn.textContent = '✓ Guardar todas';
+  toast(`✓ ${saved} ativo(s) adicionado(s)${skipped > 0 ? `, ${skipped} ignorado(s)` : ''}`);
+  showPage('dashboard');
+});
+
 // ── Init ───────────────────────────────────────────────────────────
 document.getElementById('btn-clear-key')?.addEventListener('click',()=>{if(getApiKey()){if(confirm('Apagar a chave API guardada?')){localStorage.removeItem(API_KEY_STORAGE);toast('✓ Chave apagada');}}else{toast('Não há chave guardada');}});
 
