@@ -55,6 +55,7 @@ function showPage(id) {
   if(id==='ativos') renderAtivos();
   if(id==='analise') { document.getElementById('analise-sub').textContent=currentP().nome; }
   if(id==='adicionar') { document.getElementById('adicionar-sub').textContent='A adicionar em: '+currentP().nome; }
+  if(id==='importar') { document.getElementById('import-sub') && (document.getElementById('import-sub').textContent='A importar em: '+currentP().nome); }
 }
 
 document.addEventListener('click', e => {
@@ -465,7 +466,7 @@ function handleImageFile(file) {
   reader.readAsDataURL(file);
 }
 
-document.getElementById('btn-nova-imagem')?.addEventListener('click', () => {
+document.addEventListener('click', e => { if (!e.target.closest('#btn-nova-imagem')) return; (() => {
   importImageBase64 = null;
   importPositions = [];
   document.getElementById('img-preview-wrap').style.display = 'none';
@@ -475,7 +476,7 @@ document.getElementById('btn-nova-imagem')?.addEventListener('click', () => {
   document.getElementById('img-upload').value = '';
 });
 
-document.getElementById('btn-importar-analisar')?.addEventListener('click', async () => {
+document.addEventListener('click', async (e) => { if (!e.target.closest('#btn-importar-analisar')) return; (async () => {
   if (!importImageBase64) { toast('Faz upload de uma imagem primeiro'); return; }
   if (!getApiKey()) {
     const chave = window.prompt('Introduz a tua chave API da Anthropic (começa por sk-ant-):\n\nFica guardada apenas no teu browser.');
@@ -551,6 +552,7 @@ Regras:
     document.getElementById('import-actions').style.display = 'block';
     toast('Erro ao contactar a IA.');
   }
+  })();
 });
 
 function renderImportTable(positions) {
@@ -609,7 +611,7 @@ function renderImportTable(positions) {
   });
 }
 
-document.getElementById('btn-import-guardar')?.addEventListener('click', async () => {
+document.addEventListener('click', async e => { if (!e.target.closest('#btn-import-guardar')) return; (async () => {
   const positions = importPositions;
   if (!positions || positions.length === 0) return;
   let saved = 0, skipped = 0;
@@ -647,6 +649,7 @@ document.getElementById('btn-import-guardar')?.addEventListener('click', async (
   btn.textContent = '✓ Guardar todas';
   toast(`✓ ${saved} ativo(s) adicionado(s)${skipped > 0 ? `, ${skipped} ignorado(s)` : ''}`);
   showPage('dashboard');
+  })();
 });
 
 // ── Init ───────────────────────────────────────────────────────────
