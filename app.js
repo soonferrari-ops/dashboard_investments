@@ -214,11 +214,66 @@ function renderAtivos() {
 }
 
 // ── Preços ─────────────────────────────────────────────────────────
-async function fetchPrice(ticker){
-  try{const url=`https://corsproxy.io/?${encodeURIComponent(PRICE_PROXY+ticker+'?interval=1d&range=1d')}`,res=await fetch(url),data=await res.json(),price=data?.chart?.result?.[0]?.meta?.regularMarketPrice;return price?parseFloat(price):null;}catch{return null;}
+// Taxas de conversão para EUR (aproximadas, atualizadas manualmente)
+// O Yahoo Finance devolve preços na moeda nativa do mercado
+const FX_CACHE = {};
+
+async function getEurRate(currency) {
+  if (currency === 'EUR') return 1;
+  if (FX_CACHE[currency]) return FX_CACHE[currency];
+  try {
+    // Buscar taxa de câmbio via Yahoo Finance (ex: GBPEUR=X, USDEUR=X)
+    const pair = currency + 'EUR=X';
+    const url = `https://corsproxy.io/?${encodeURIComponent(PRICE_PROXY + pair + '?interval=1d&range=1d')}`;
+    const res = await fetch(url), data = await res.json();
+    const rate = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+    if (rate) { FX_CACHE[currency] = parseFloat(rate); return parseFloat(rate); }
+  } catch {}
+  // Fallback: taxas aproximadas estáticas
+  const fallback = { USD:0.92, GBP:1.17, GBX:0.0117, JPY:0.006, CHF:1.03, CAD:0.68, AUD:0.60, SEK:0.088, NOK:0.085, DKK:0.134, HKD:0.118, SGD:0.68 };
+  return fallback[currency] || 1;
 }
-async function fetchHistoricalPrices(ticker,period){
-  try{const ranges={'1m':'1mo','3m':'3mo','6m':'6mo','1a':'1y'},url=`https://corsproxy.io/?${encodeURIComponent(PRICE_PROXY+ticker+`?interval=1d&range=${ranges[period]||'1mo'}`)}`,res=await fetch(url),data=await res.json(),result=data?.chart?.result?.[0];if(!result)return null;const timestamps=result.timestamp,closes=result.indicators?.quote?.[0]?.close;if(!timestamps||!closes)return null;return timestamps.map((t,i)=>({d:new Date(t*1000).toISOString().split('T')[0],close:closes[i]})).filter(p=>p.close!=null);}catch{return null;}
+
+function detectCurrency(meta) {
+  const currency = meta?.currency || 'USD';
+  // GBX = pence (1/100 de libra) — Yahoo usa GBp ou GBX para ações britânicas
+  if (currency === 'GBp' || currency === 'GBX') return 'GBX';
+  return currency;
+}
+
+async function fetchPrice(ticker) {
+  try {
+    const url = `https://corsproxy.io/?${encodeURIComponent(PRICE_PROXY + ticker + '?interval=1d&range=1d')}`;
+    const res = await fetch(url), data = await res.json();
+    const meta = data?.chart?.result?.[0]?.meta;
+    if (!meta?.regularMarketPrice) return null;
+    let price = parseFloat(meta.regularMarketPrice);
+    const currency = detectCurrency(meta);
+    // GBX: pence → libras primeiro, depois converter para EUR
+    if (currency === 'GBX') price = price / 100;
+    const eurRate = await getEurRate(currency === 'GBX' ? 'GBP' : currency);
+    return Math.round(price * eurRate * 10000) / 10000;
+  } catch { return null; }
+}
+
+async function fetchHistoricalPrices(ticker, period) {
+  try {
+    const ranges = {'1m':'1mo','3m':'3mo','6m':'6mo','1a':'1y'};
+    const url = `https://corsproxy.io/?${encodeURIComponent(PRICE_PROXY + ticker + `?interval=1d&range=${ranges[period]||'1mo'}`)}`;
+    const res = await fetch(url), data = await res.json();
+    const result = data?.chart?.result?.[0];
+    if (!result) return null;
+    const meta = result.meta;
+    const currency = detectCurrency(meta);
+    const eurRate = await getEurRate(currency === 'GBX' ? 'GBP' : currency);
+    const gbxDiv = currency === 'GBX' ? 100 : 1;
+    const timestamps = result.timestamp, closes = result.indicators?.quote?.[0]?.close;
+    if (!timestamps || !closes) return null;
+    return timestamps.map((t,i) => ({
+      d: new Date(t*1000).toISOString().split('T')[0],
+      close: closes[i] != null ? (closes[i] / gbxDiv) * eurRate : null
+    })).filter(p => p.close != null);
+  } catch { return null; }
 }
 
 async function atualizarTodosPrecos(){
