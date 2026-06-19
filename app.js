@@ -240,14 +240,35 @@ function detectCurrency(meta) {
   return (c === 'GBp' || c === 'GBX') ? 'GBX' : c;
 }
 
+// Vai buscar todas as taxas de câmbio de uma vez para ser eficiente
+const CURRENCIES_TO_FETCH = ['USD','GBP','JPY','CHF','CAD','AUD','SEK','NOK','DKK','HKD','SGD','BRL','CNY'];
+let fxFetchedAll = false;
+
+async function prefetchAllRates() {
+  if (fxFetchedAll) return;
+  // Buscar todas as taxas em paralelo
+  await Promise.all(CURRENCIES_TO_FETCH.map(async cur => {
+    if (FX_CACHE[cur]) return;
+    try {
+      const data = await yahooFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${cur}EUR=X?interval=1d&range=1d`);
+      const rate = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+      if (rate) FX_CACHE[cur] = parseFloat(rate);
+    } catch {}
+  }));
+  fxFetchedAll = true;
+}
+
 async function getEurRate(currency) {
   if (currency === 'EUR') return 1;
-  if (FX_CACHE[currency]) return FX_CACHE[currency];
-  const data = await yahooFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${currency}EUR=X?interval=1d&range=1d`);
-  const rate = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
-  if (rate) { FX_CACHE[currency] = parseFloat(rate); return parseFloat(rate); }
-  const fallback = { USD:0.87,GBP:1.16,JPY:0.0058,CHF:1.05,CAD:0.64,AUD:0.55,SEK:0.082,NOK:0.082,DKK:0.134,HKD:0.11,SGD:0.65,BRL:0.16,CNY:0.12 };
-  return fallback[currency] || 1;
+  // Se ainda não temos a taxa, ir buscar agora
+  if (!FX_CACHE[currency]) {
+    try {
+      const data = await yahooFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${currency}EUR=X?interval=1d&range=1d`);
+      const rate = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+      if (rate) FX_CACHE[currency] = parseFloat(rate);
+    } catch {}
+  }
+  return FX_CACHE[currency] || 1;
 }
 
 async function fetchPrice(ticker) {
@@ -280,8 +301,10 @@ async function fetchHistoricalPrices(ticker, period) {
 
 async function atualizarTodosPrecos(){
   const btn=document.getElementById('btn-refresh-all');btn.textContent='↻ A atualizar...';
-  // Limpar cache de taxas de câmbio para ir buscar valores atuais
+  // Limpar cache e ir buscar taxas atualizadas
   Object.keys(FX_CACHE).forEach(k => delete FX_CACHE[k]);
+  fxFetchedAll = false;
+  await prefetchAllRates();
   const ativos=getAtivos();let n=0;
   for(let i=0;i<ativos.length;i++){
     if(ativos[i].tipo==='Cash')continue;
@@ -411,4 +434,4 @@ document.getElementById('btn-clear-key')?.addEventListener('click',()=>{if(getAp
 
 toggleCashFields();
 renderSidebar();
-renderDashboard();
+prefetchAllRates().then(() => renderDashboard());
