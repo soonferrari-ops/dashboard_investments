@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <span class="logo-icon">◈</span>
+      <span class="logo-text">Portfolio</span>
+    </div>
+    <nav class="nav">
+      <a href="#" class="nav-item active" data-page="dashboard">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </a>
+      <a href="#" class="nav-item" data-page="ativos">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        Ativos
+      </a>
+      <a href="#" class="nav-item" data-page="adicionar">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Adicionar ativo
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <span id="last-update">—</span>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- PAGE: DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <header class="page-header">
+        <div>
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-sub">Visão geral do teu portfolio</p>
+        </div>
+      </header>
+
+      <!-- Métricas -->
+      <div class="metrics-grid">
+        <div class="metric-card accent">
+          <div class="metric-label">Valor total</div>
+          <div class="metric-value" id="m-total">€0,00</div>
+          <div class="metric-trend" id="m-total-sub">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Ganho / Perda</div>
+          <div class="metric-value" id="m-gl">€0,00</div>
+          <div class="metric-trend" id="m-gl-pct">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Custo base</div>
+          <div class="metric-value" id="m-custo">€0,00</div>
+          <div class="metric-trend">valor investido</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Cash disponível</div>
+          <div class="metric-value" id="m-cash">€0,00</div>
+          <div class="metric-trend" id="m-cash-pct">—</div>
+        </div>
+      </div>
+
+      <!-- Gráficos -->
+      <div class="charts-row">
+        <div class="card chart-card">
+          <div class="card-header">
+            <span class="card-title">Evolução do portfolio</span>
+            <div class="chart-tabs">
+              <button class="chart-tab active" data-period="1m">1M</button>
+              <button class="chart-tab" data-period="3m">3M</button>
+              <button class="chart-tab" data-period="6m">6M</button>
+              <button class="chart-tab" data-period="1a">1A</button>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="evoChart"></canvas>
+            <div class="chart-empty" id="evo-empty">Adiciona ativos para ver a evolução</div>
+          </div>
+        </div>
+        <div class="card chart-card chart-card--sm">
+          <div class="card-header">
+            <span class="card-title">Alocação</span>
+          </div>
+          <div class="chart-wrap donut-wrap">
+            <canvas id="pieChart"></canvas>
+            <div class="donut-center" id="donut-label">—</div>
+            <div class="chart-empty" id="pie-empty">Sem dados</div>
+          </div>
+          <div class="legend" id="pie-legend"></div>
+        </div>
+      </div>
+
+      <!-- Top posições -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Posições</span>
+          <a href="#" class="card-link" data-page="ativos">Ver todas →</a>
+        </div>
+        <div id="dash-table-wrap">
+          <div class="empty-state" id="dash-empty">
+            <p>Ainda não tens ativos.<br><a href="#" class="link" data-page="adicionar">Adiciona o primeiro →</a></p>
+          </div>
+          <table class="table" id="dash-table" style="display:none">
+            <thead>
+              <tr>
+                <th>Ativo</th>
+                <th>Tipo</th>
+                <th class="right">Valor atual</th>
+                <th class="right">Ganho / Perda</th>
+                <th class="right">Peso</th>
+              </tr>
+            </thead>
+            <tbody id="dash-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: ATIVOS -->
+    <div id="page-ativos" class="page">
+      <header class="page-header">
+        <div>
+          <h1 class="page-title">Ativos</h1>
+          <p class="page-sub">Todas as tuas posições</p>
+        </div>
+        <button class="btn btn-primary" data-page="adicionar">+ Adicionar</button>
+      </header>
+
+      <div class="card">
+        <div id="ativos-empty" class="empty-state">
+          <p>Ainda não tens ativos.<br><a href="#" class="link" data-page="adicionar">Adiciona o primeiro →</a></p>
+        </div>
+        <table class="table" id="ativos-table" style="display:none">
+          <thead>
+            <tr>
+              <th>Ativo</th>
+              <th>Tipo</th>
+              <th class="right">Qtd.</th>
+              <th class="right">Preço médio</th>
+              <th class="right">Valor atual</th>
+              <th class="right">Ganho / Perda</th>
+              <th class="right">Peso</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="ativos-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PAGE: ADICIONAR -->
+    <div id="page-adicionar" class="page">
+      <header class="page-header">
+        <div>
+          <h1 class="page-title">Adicionar ativo</h1>
+          <p class="page-sub">Regista uma nova posição no portfolio</p>
+        </div>
+      </header>
+
+      <div class="card form-card">
+        <div class="form-group">
+          <label class="label">Tipo de ativo</label>
+          <div class="type-selector" id="type-selector">
+            <button class="type-btn active" data-type="Ação">📈 Ação</button>
+            <button class="type-btn" data-type="ETF">🧩 ETF</button>
+            <button class="type-btn" data-type="Cripto">₿ Cripto</button>
+            <button class="type-btn" data-type="Cash">💶 Cash</button>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="label" for="f-ticker">Ticker / Nome</label>
+            <input class="input" id="f-ticker" type="text" placeholder="ex: AAPL, VWCE, BTC" />
+          </div>
+          <div class="form-group">
+            <label class="label" for="f-nome">Nome completo</label>
+            <input class="input" id="f-nome" type="text" placeholder="ex: Apple Inc." />
+          </div>
+        </div>
+
+        <div class="form-row" id="row-qty-price">
+          <div class="form-group">
+            <label class="label" for="f-qty">Quantidade</label>
+            <input class="input" id="f-qty" type="number" step="any" placeholder="ex: 10" />
+          </div>
+          <div class="form-group">
+            <label class="label" for="f-preco-medio">Preço médio de compra (€)</label>
+            <input class="input" id="f-preco-medio" type="number" step="any" placeholder="ex: 150,00" />
+          </div>
+          <div class="form-group">
+            <label class="label" for="f-preco-atual">Preço atual (€)</label>
+            <input class="input" id="f-preco-atual" type="number" step="any" placeholder="ex: 178,00" />
+          </div>
+        </div>
+
+        <div class="form-row" id="row-cash" style="display:none">
+          <div class="form-group">
+            <label class="label" for="f-cash-val">Valor em cash (€)</label>
+            <input class="input" id="f-cash-val" type="number" step="any" placeholder="ex: 5000" />
+          </div>
+          <div class="form-group">
+            <label class="label" for="f-cash-juro">Juro anual (%) — opcional</label>
+            <input class="input" id="f-cash-juro" type="number" step="any" placeholder="ex: 3,5" />
+          </div>
+        </div>
+
+        <div class="form-preview" id="form-preview" style="display:none">
+          <div class="preview-row"><span>Valor investido</span><span id="prev-investido">—</span></div>
+          <div class="preview-row"><span>Valor atual</span><span id="prev-atual">—</span></div>
+          <div class="preview-row"><span>Ganho / Perda</span><span id="prev-gl" class="pos">—</span></div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-ghost" id="btn-cancelar">Cancelar</button>
+          <button class="btn btn-primary" id="btn-guardar">Guardar ativo</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL EDITAR -->
+  <div class="modal-backdrop" id="modal-backdrop" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">Editar ativo</span>
+        <button class="modal-close" id="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edit-idx" />
+        <div class="form-row">
+          <div class="form-group">
+            <label class="label">Ticker</label>
+            <input class="input" id="edit-ticker" type="text" />
+          </div>
+          <div class="form-group">
+            <label class="label">Nome</label>
+            <input class="input" id="edit-nome" type="text" />
+          </div>
+        </div>
+        <div class="form-row" id="edit-row-normal">
+          <div class="form-group">
+            <label class="label">Quantidade</label>
+            <input class="input" id="edit-qty" type="number" step="any" />
+          </div>
+          <div class="form-group">
+            <label class="label">Preço médio (€)</label>
+            <input class="input" id="edit-preco-medio" type="number" step="any" />
+          </div>
+          <div class="form-group">
+            <label class="label">Preço atual (€)</label>
+            <input class="input" id="edit-preco-atual" type="number" step="any" />
+          </div>
+        </div>
+        <div class="form-row" id="edit-row-cash" style="display:none">
+          <div class="form-group">
+            <label class="label">Valor (€)</label>
+            <input class="input" id="edit-cash-val" type="number" step="any" />
+          </div>
+          <div class="form-group">
+            <label class="label">Juro anual (%)</label>
+            <input class="input" id="edit-cash-juro" type="number" step="any" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btn-apagar">Apagar</button>
+        <button class="btn btn-primary" id="btn-editar-guardar">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
