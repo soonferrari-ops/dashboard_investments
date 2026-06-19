@@ -563,3 +563,47 @@ body {
 .ai-result strong { color: var(--text); font-weight: 600; }
 
 .price-updating { opacity: 0.5; font-style: italic; }
+
+/* ── Multi-portfolio ─────────────────────────────────────────────── */
+.portfolio-section { padding: 0 8px; margin-bottom: 8px; }
+.portfolio-label { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; padding: 0 2px; margin-bottom: 6px; }
+#portfolio-list { display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; }
+.portfolio-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 10px; border-radius: var(--radius-sm);
+  cursor: pointer; transition: background 0.15s;
+  font-size: 13px; color: var(--text2); font-weight: 500;
+}
+.portfolio-item:hover { background: var(--bg3); color: var(--text); }
+.portfolio-item.active { background: var(--bg3); color: var(--text); }
+.portfolio-item-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.portfolio-item-edit { opacity: 0; font-size: 12px; padding: 2px 5px; border-radius: 4px; background: none; border: none; color: var(--text2); cursor: pointer; flex-shrink: 0; }
+.portfolio-item:hover .portfolio-item-edit { opacity: 1; }
+.portfolio-item-edit:hover { color: var(--text); background: var(--border); }
+.btn-new-portfolio {
+  width: 100%; background: none; border: 1px dashed var(--border2);
+  color: var(--text3); font-size: 12px; font-family: var(--font);
+  padding: 7px 10px; border-radius: var(--radius-sm); cursor: pointer;
+  text-align: left; transition: all 0.15s;
+}
+.btn-new-portfolio:hover { color: var(--text2); border-color: var(--border); }
+.nav-divider { height: 1px; background: var(--border); margin: 10px 8px; }
+
+/* Global portfolios list */
+.global-portfolio-card {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 0; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.1s;
+}
+.global-portfolio-card:last-child { border-bottom: none; }
+.global-portfolio-card:hover { background: rgba(255,255,255,0.02); }
+.gpc-left { display: flex; align-items: center; gap: 12px; }
+.gpc-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.gpc-name { font-weight: 500; font-size: 14px; }
+.gpc-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.gpc-right { text-align: right; }
+.gpc-value { font-family: var(--mono); font-size: 14px; font-weight: 500; }
+.gpc-gl { font-size: 12px; font-family: var(--mono); margin-top: 2px; }
+
+.btn-ghost--danger { color: var(--neg) !important; }
+.btn-ghost--danger:hover { background: rgba(224,92,92,0.1) !important; }

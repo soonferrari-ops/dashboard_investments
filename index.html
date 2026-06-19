@@ -10,14 +10,27 @@
 </head>
 <body>
 
-  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="logo">
       <span class="logo-icon">◈</span>
       <span class="logo-text">Portfolio</span>
     </div>
-    <nav class="nav">
-      <a href="#" class="nav-item active" data-page="dashboard">
+
+    <!-- Selector de portfolios -->
+    <div class="portfolio-section">
+      <div class="portfolio-label">PORTFOLIOS</div>
+      <div id="portfolio-list"></div>
+      <button class="btn-new-portfolio" id="btn-new-portfolio">+ Novo portfolio</button>
+    </div>
+
+    <div class="nav-divider"></div>
+
+    <nav class="nav" id="sidebar-nav">
+      <a href="#" class="nav-item active" data-page="global">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        Global
+      </a>
+      <a href="#" class="nav-item" data-page="dashboard">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
         Dashboard
       </a>
@@ -34,25 +47,60 @@
         Adicionar ativo
       </a>
     </nav>
+
     <div class="sidebar-footer">
       <div id="last-update">—</div>
-      <button class="btn-refresh" id="btn-refresh-all" title="Atualizar preços">↻ Atualizar preços</button>
-      <button class="btn-refresh btn-refresh--danger" id="btn-clear-key" title="Apagar chave API guardada" style="margin-top:6px">✕ Apagar chave IA</button>
+      <button class="btn-refresh" id="btn-refresh-all">↻ Atualizar preços</button>
+      <button class="btn-refresh btn-refresh--danger" id="btn-clear-key" style="margin-top:6px">✕ Apagar chave IA</button>
     </div>
   </aside>
 
-  <!-- MAIN -->
   <main class="main">
 
-    <!-- PAGE: DASHBOARD -->
-    <div id="page-dashboard" class="page active">
+    <!-- PAGE: GLOBAL -->
+    <div id="page-global" class="page active">
       <header class="page-header">
         <div>
-          <h1 class="page-title">Dashboard</h1>
-          <p class="page-sub">Visão geral do teu portfolio</p>
+          <h1 class="page-title">Global</h1>
+          <p class="page-sub">Todos os portfolios consolidados</p>
         </div>
       </header>
+      <div class="metrics-grid">
+        <div class="metric-card accent">
+          <div class="metric-label">Valor total</div>
+          <div class="metric-value" id="g-total">€0,00</div>
+          <div class="metric-trend" id="g-total-sub">0 portfolios</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Ganho / Perda</div>
+          <div class="metric-value" id="g-gl">€0,00</div>
+          <div class="metric-trend" id="g-gl-pct">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Custo base</div>
+          <div class="metric-value" id="g-custo">€0,00</div>
+          <div class="metric-trend">valor investido</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Cash total</div>
+          <div class="metric-value" id="g-cash">€0,00</div>
+          <div class="metric-trend" id="g-cash-pct">—</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Portfolios</span></div>
+        <div id="global-portfolios-list"></div>
+      </div>
+    </div>
 
+    <!-- PAGE: DASHBOARD -->
+    <div id="page-dashboard" class="page">
+      <header class="page-header">
+        <div>
+          <h1 class="page-title" id="dash-title">Dashboard</h1>
+          <p class="page-sub" id="dash-sub">—</p>
+        </div>
+      </header>
       <div class="metrics-grid">
         <div class="metric-card accent">
           <div class="metric-label">Valor total</div>
@@ -75,11 +123,10 @@
           <div class="metric-trend" id="m-cash-pct">—</div>
         </div>
       </div>
-
       <div class="charts-row">
         <div class="card chart-card">
           <div class="card-header">
-            <span class="card-title">Evolução do portfolio</span>
+            <span class="card-title">Evolução</span>
             <div class="chart-tabs">
               <button class="chart-tab active" data-period="1m">1M</button>
               <button class="chart-tab" data-period="3m">3M</button>
@@ -93,9 +140,7 @@
           </div>
         </div>
         <div class="card chart-card chart-card--sm">
-          <div class="card-header">
-            <span class="card-title">Alocação</span>
-          </div>
+          <div class="card-header"><span class="card-title">Alocação</span></div>
           <div class="chart-wrap donut-wrap">
             <canvas id="pieChart"></canvas>
             <div class="donut-center" id="donut-label">—</div>
@@ -104,30 +149,16 @@
           <div class="legend" id="pie-legend"></div>
         </div>
       </div>
-
       <div class="card">
         <div class="card-header">
           <span class="card-title">Posições</span>
           <a href="#" class="card-link" data-page="ativos">Ver todas →</a>
         </div>
-        <div id="dash-table-wrap">
-          <div class="empty-state" id="dash-empty">
-            <p>Ainda não tens ativos.<br><a href="#" class="link" data-page="adicionar">Adiciona o primeiro →</a></p>
-          </div>
-          <table class="table" id="dash-table" style="display:none">
-            <thead>
-              <tr>
-                <th>Ativo</th>
-                <th>Tipo</th>
-                <th class="right">Preço atual</th>
-                <th class="right">Valor</th>
-                <th class="right">Ganho / Perda</th>
-                <th class="right">Peso</th>
-              </tr>
-            </thead>
-            <tbody id="dash-tbody"></tbody>
-          </table>
-        </div>
+        <div class="empty-state" id="dash-empty"><p>Ainda não tens ativos.<br><a href="#" class="link" data-page="adicionar">Adiciona o primeiro →</a></p></div>
+        <table class="table" id="dash-table" style="display:none">
+          <thead><tr><th>Ativo</th><th>Tipo</th><th class="right">Preço atual</th><th class="right">Valor</th><th class="right">Ganho / Perda</th><th class="right">Peso</th></tr></thead>
+          <tbody id="dash-tbody"></tbody>
+        </table>
       </div>
     </div>
 
@@ -135,29 +166,15 @@
     <div id="page-ativos" class="page">
       <header class="page-header">
         <div>
-          <h1 class="page-title">Ativos</h1>
-          <p class="page-sub">Todas as tuas posições</p>
+          <h1 class="page-title" id="ativos-title">Ativos</h1>
+          <p class="page-sub" id="ativos-sub">—</p>
         </div>
         <button class="btn btn-primary" data-page="adicionar">+ Adicionar</button>
       </header>
       <div class="card">
-        <div id="ativos-empty" class="empty-state">
-          <p>Ainda não tens ativos.<br><a href="#" class="link" data-page="adicionar">Adiciona o primeiro →</a></p>
-        </div>
+        <div class="empty-state" id="ativos-empty"><p>Ainda não tens ativos.<br><a href="#" class="link" data-page="adicionar">Adiciona o primeiro →</a></p></div>
         <table class="table" id="ativos-table" style="display:none">
-          <thead>
-            <tr>
-              <th>Ativo</th>
-              <th>Tipo</th>
-              <th class="right">Qtd.</th>
-              <th class="right">Preço médio</th>
-              <th class="right">Preço atual</th>
-              <th class="right">Valor</th>
-              <th class="right">Ganho / Perda</th>
-              <th class="right">Peso</th>
-              <th></th>
-            </tr>
-          </thead>
+          <thead><tr><th>Ativo</th><th>Tipo</th><th class="right">Qtd.</th><th class="right">Preço médio</th><th class="right">Preço atual</th><th class="right">Valor</th><th class="right">Ganho / Perda</th><th class="right">Peso</th><th></th></tr></thead>
           <tbody id="ativos-tbody"></tbody>
         </table>
       </div>
@@ -168,10 +185,9 @@
       <header class="page-header">
         <div>
           <h1 class="page-title">Análise IA</h1>
-          <p class="page-sub">O Claude analisa o teu portfolio e dá sugestões</p>
+          <p class="page-sub" id="analise-sub">—</p>
         </div>
       </header>
-
       <div class="card ai-card">
         <div class="ai-header">
           <div class="ai-icon">◈</div>
@@ -181,17 +197,8 @@
           </div>
           <button class="btn btn-primary" id="btn-analisar">Analisar agora</button>
         </div>
-
-        <div id="ai-empty" class="empty-state">
-          <p>Clica em "Analisar agora" para receber uma análise detalhada do teu portfolio.<br>
-          A IA vai avaliar a tua diversificação, riscos e oportunidades.</p>
-        </div>
-
-        <div id="ai-loading" style="display:none" class="ai-loading">
-          <div class="ai-spinner"></div>
-          <span>A analisar o teu portfolio...</span>
-        </div>
-
+        <div id="ai-empty" class="empty-state"><p>Clica em "Analisar agora" para uma análise detalhada.<br>A IA avalia diversificação, riscos e oportunidades.</p></div>
+        <div id="ai-loading" style="display:none" class="ai-loading"><div class="ai-spinner"></div><span>A analisar o teu portfolio...</span></div>
         <div id="ai-result" style="display:none" class="ai-result"></div>
       </div>
     </div>
@@ -201,10 +208,9 @@
       <header class="page-header">
         <div>
           <h1 class="page-title">Adicionar ativo</h1>
-          <p class="page-sub">Regista uma nova posição no portfolio</p>
+          <p class="page-sub" id="adicionar-sub">—</p>
         </div>
       </header>
-
       <div class="card form-card">
         <div class="form-group">
           <label class="label">Tipo de ativo</label>
@@ -215,13 +221,12 @@
             <button class="type-btn" data-type="Cash">💶 Cash</button>
           </div>
         </div>
-
         <div class="form-row">
           <div class="form-group">
             <label class="label" for="f-ticker">Ticker / Nome</label>
             <div style="position:relative">
               <input class="input" id="f-ticker" type="text" placeholder="ex: AAPL, VWCE, BTC-USD" />
-              <button class="btn-fetch-price" id="btn-fetch-price" title="Buscar preço atual">↓ Preço</button>
+              <button class="btn-fetch-price" id="btn-fetch-price">↓ Preço</button>
             </div>
           </div>
           <div class="form-group">
@@ -229,14 +234,13 @@
             <input class="input" id="f-nome" type="text" placeholder="ex: Apple Inc." />
           </div>
         </div>
-
         <div class="form-row" id="row-qty-price">
           <div class="form-group">
             <label class="label" for="f-qty">Quantidade</label>
             <input class="input" id="f-qty" type="number" step="any" placeholder="ex: 10" />
           </div>
           <div class="form-group">
-            <label class="label" for="f-preco-medio">Preço médio de compra (€)</label>
+            <label class="label" for="f-preco-medio">Preço médio (€)</label>
             <input class="input" id="f-preco-medio" type="number" step="any" placeholder="ex: 150,00" />
           </div>
           <div class="form-group">
@@ -244,7 +248,6 @@
             <input class="input" id="f-preco-atual" type="number" step="any" placeholder="auto ou manual" />
           </div>
         </div>
-
         <div class="form-row" id="row-cash" style="display:none">
           <div class="form-group">
             <label class="label" for="f-cash-val">Valor em cash (€)</label>
@@ -255,13 +258,11 @@
             <input class="input" id="f-cash-juro" type="number" step="any" placeholder="ex: 3,5" />
           </div>
         </div>
-
         <div class="form-preview" id="form-preview" style="display:none">
           <div class="preview-row"><span>Valor investido</span><span id="prev-investido">—</span></div>
           <div class="preview-row"><span>Valor atual</span><span id="prev-atual">—</span></div>
           <div class="preview-row"><span>Ganho / Perda</span><span id="prev-gl">—</span></div>
         </div>
-
         <div class="form-actions">
           <button class="btn btn-ghost" id="btn-cancelar">Cancelar</button>
           <button class="btn btn-primary" id="btn-guardar">Guardar ativo</button>
@@ -271,7 +272,7 @@
 
   </main>
 
-  <!-- MODAL EDITAR -->
+  <!-- MODAL EDITAR ATIVO -->
   <div class="modal-backdrop" id="modal-backdrop" style="display:none">
     <div class="modal">
       <div class="modal-header">
@@ -281,43 +282,42 @@
       <div class="modal-body">
         <input type="hidden" id="edit-idx" />
         <div class="form-row">
-          <div class="form-group">
-            <label class="label">Ticker</label>
-            <input class="input" id="edit-ticker" type="text" />
-          </div>
-          <div class="form-group">
-            <label class="label">Nome</label>
-            <input class="input" id="edit-nome" type="text" />
-          </div>
+          <div class="form-group"><label class="label">Ticker</label><input class="input" id="edit-ticker" type="text" /></div>
+          <div class="form-group"><label class="label">Nome</label><input class="input" id="edit-nome" type="text" /></div>
         </div>
         <div class="form-row" id="edit-row-normal">
-          <div class="form-group">
-            <label class="label">Quantidade</label>
-            <input class="input" id="edit-qty" type="number" step="any" />
-          </div>
-          <div class="form-group">
-            <label class="label">Preço médio (€)</label>
-            <input class="input" id="edit-preco-medio" type="number" step="any" />
-          </div>
-          <div class="form-group">
-            <label class="label">Preço atual (€)</label>
-            <input class="input" id="edit-preco-atual" type="number" step="any" />
-          </div>
+          <div class="form-group"><label class="label">Quantidade</label><input class="input" id="edit-qty" type="number" step="any" /></div>
+          <div class="form-group"><label class="label">Preço médio (€)</label><input class="input" id="edit-preco-medio" type="number" step="any" /></div>
+          <div class="form-group"><label class="label">Preço atual (€)</label><input class="input" id="edit-preco-atual" type="number" step="any" /></div>
         </div>
         <div class="form-row" id="edit-row-cash" style="display:none">
-          <div class="form-group">
-            <label class="label">Valor (€)</label>
-            <input class="input" id="edit-cash-val" type="number" step="any" />
-          </div>
-          <div class="form-group">
-            <label class="label">Juro anual (%)</label>
-            <input class="input" id="edit-cash-juro" type="number" step="any" />
-          </div>
+          <div class="form-group"><label class="label">Valor (€)</label><input class="input" id="edit-cash-val" type="number" step="any" /></div>
+          <div class="form-group"><label class="label">Juro anual (%)</label><input class="input" id="edit-cash-juro" type="number" step="any" /></div>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" id="btn-apagar">Apagar</button>
         <button class="btn btn-primary" id="btn-editar-guardar">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PORTFOLIO -->
+  <div class="modal-backdrop" id="modal-portfolio-backdrop" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="modal-portfolio-title">Novo portfolio</span>
+        <button class="modal-close" id="modal-portfolio-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="label">Nome do portfolio</label>
+          <input class="input" id="portfolio-nome-input" type="text" placeholder="ex: Reforma, Cripto, Principal" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost btn-ghost--danger" id="btn-apagar-portfolio" style="display:none">Apagar portfolio</button>
+        <button class="btn btn-primary" id="btn-guardar-portfolio">Criar</button>
       </div>
     </div>
   </div>
