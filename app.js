@@ -478,7 +478,7 @@ document.getElementById('btn-nova-imagem')?.addEventListener('click', () => {
 document.getElementById('btn-importar-analisar')?.addEventListener('click', async () => {
   if (!importImageBase64) { toast('Faz upload de uma imagem primeiro'); return; }
   if (!getApiKey()) {
-    const chave = prompt('Introduz a tua chave API da Anthropic (começa por sk-ant-):\n\nFica guardada apenas no teu browser.');
+    const chave = window.prompt('Introduz a tua chave API da Anthropic (começa por sk-ant-):\n\nFica guardada apenas no teu browser.');
     if (!chave || !chave.trim().startsWith('sk-ant-')) { toast('Chave inválida'); return; }
     localStorage.setItem(API_KEY_STORAGE, chave.trim());
     toast('✓ Chave guardada');
@@ -488,7 +488,7 @@ document.getElementById('btn-importar-analisar')?.addEventListener('click', asyn
   document.getElementById('import-actions').style.display = 'none';
   document.getElementById('import-result').style.display = 'none';
 
-  const prompt = `Analisa esta screenshot de ${selectedBroker} e extrai todas as posições de investimento visíveis.
+  const aiPrompt = `Analisa esta screenshot de ${selectedBroker} e extrai todas as posições de investimento visíveis.
 
 Para cada posição, devolve um JSON array com este formato exacto:
 [
@@ -526,7 +526,7 @@ Regras:
           role: 'user',
           content: [
             { type: 'image', source: { type: 'base64', media_type: 'image/png', data: importImageBase64 } },
-            { type: 'text', text: prompt }
+            { type: 'text', text: aiPrompt }
           ]
         }]
       })
