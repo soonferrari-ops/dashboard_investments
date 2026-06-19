@@ -246,7 +246,7 @@ async function getEurRate(currency) {
   const data = await yahooFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${currency}EUR=X?interval=1d&range=1d`);
   const rate = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
   if (rate) { FX_CACHE[currency] = parseFloat(rate); return parseFloat(rate); }
-  const fallback = { USD:0.92,GBP:1.17,JPY:0.006,CHF:1.03,CAD:0.68,AUD:0.60,SEK:0.088,NOK:0.085,DKK:0.134,HKD:0.118,SGD:0.68,BRL:0.18,CNY:0.13 };
+  const fallback = { USD:0.87,GBP:1.16,JPY:0.0058,CHF:1.05,CAD:0.64,AUD:0.55,SEK:0.082,NOK:0.082,DKK:0.134,HKD:0.11,SGD:0.65,BRL:0.16,CNY:0.12 };
   return fallback[currency] || 1;
 }
 
@@ -280,6 +280,8 @@ async function fetchHistoricalPrices(ticker, period) {
 
 async function atualizarTodosPrecos(){
   const btn=document.getElementById('btn-refresh-all');btn.textContent='↻ A atualizar...';
+  // Limpar cache de taxas de câmbio para ir buscar valores atuais
+  Object.keys(FX_CACHE).forEach(k => delete FX_CACHE[k]);
   const ativos=getAtivos();let n=0;
   for(let i=0;i<ativos.length;i++){
     if(ativos[i].tipo==='Cash')continue;
