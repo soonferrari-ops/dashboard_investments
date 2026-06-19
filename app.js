@@ -281,7 +281,14 @@ async function fetchHistoricalPrices(ticker, period) {
 async function atualizarTodosPrecos(){
   const btn=document.getElementById('btn-refresh-all');btn.textContent='↻ A atualizar...';
   const ativos=getAtivos();let n=0;
-  for(let i=0;i<ativos.length;i++){if(ativos[i].tipo==='Cash')continue;const price=await fetchPrice(ativos[i].ticker);if(price){ativos[i].precoAtual=price;n++;}}
+  for(let i=0;i<ativos.length;i++){
+    if(ativos[i].tipo==='Cash')continue;
+    const price=await fetchPrice(ativos[i].ticker);
+    if(price){
+      ativos[i].precoAtual=price;
+      n++;
+    }
+  }
   saveAtivos();renderDashboard();renderAtivos();btn.textContent='↻ Atualizar preços';
   document.getElementById('last-update').textContent='Atualizado: '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   toast(`✓ ${n} preço(s) atualizado(s)`);
@@ -316,10 +323,26 @@ document.getElementById('f-moeda')?.addEventListener('change',()=>{
   if(lbl)lbl.textContent=(sym[m]||m)+' '+m;
   updatePreview();
 });
-function updatePreview(){
+async function updatePreview(){
   const preview=document.getElementById('form-preview');
   if(selectedType==='Cash'){const val=parseFloat(document.getElementById('f-cash-val').value)||0;if(!val){preview.style.display='none';return;}preview.style.display='block';document.getElementById('prev-investido').textContent=fmt(val);document.getElementById('prev-atual').textContent=fmt(val);document.getElementById('prev-gl').textContent='€0,00 (0,00%)';document.getElementById('prev-gl').className='';}
-  else{const qty=parseFloat(document.getElementById('f-qty').value)||0,pm=parseFloat(document.getElementById('f-preco-medio').value)||0,pa=parseFloat(document.getElementById('f-preco-atual').value)||0;if(!qty||!pm){preview.style.display='none';return;}preview.style.display='block';const investido=qty*pm,atual=qty*pa,gl=atual-investido,glPct=investido>0?(gl/investido)*100:0;document.getElementById('prev-investido').textContent=fmt(investido);document.getElementById('prev-atual').textContent=pa>0?fmt(atual):'—';document.getElementById('prev-gl').textContent=pa>0?`${fmt(gl)} (${fmtPct(glPct)})`:'—';document.getElementById('prev-gl').className=gl>=0?'pos':'neg';}
+  else{
+    const qty=parseFloat(document.getElementById('f-qty').value)||0;
+    const pm=parseFloat(document.getElementById('f-preco-medio').value)||0;
+    const pa=parseFloat(document.getElementById('f-preco-atual').value)||0;
+    const moeda=document.getElementById('f-moeda')?.value||'EUR';
+    if(!qty||!pm){preview.style.display='none';return;}
+    preview.style.display='block';
+    // Converter preço médio para EUR para o preview
+    const fxRate=moeda==='GBX'?(await getEurRate('GBP'))/100:await getEurRate(moeda);
+    const investido=qty*pm*fxRate;
+    const atual=qty*pa; // preço atual já está em EUR (vem do fetchPrice)
+    const gl=atual-investido,glPct=investido>0?(gl/investido)*100:0;
+    document.getElementById('prev-investido').textContent=fmt(investido)+` (${moeda} ${(qty*pm).toFixed(2)})`;
+    document.getElementById('prev-atual').textContent=pa>0?fmt(atual):'—';
+    document.getElementById('prev-gl').textContent=pa>0?`${fmt(gl)} (${fmtPct(glPct)})`:'—';
+    document.getElementById('prev-gl').className=gl>=0?'pos':'neg';
+  }
 }
 document.getElementById('btn-fetch-price').addEventListener('click',async()=>{
   const ticker=document.getElementById('f-ticker').value.trim().toUpperCase();if(!ticker){toast('Escreve um ticker primeiro');return;}
@@ -338,7 +361,14 @@ document.getElementById('btn-guardar').addEventListener('click',async()=>{
     const moeda=document.getElementById('f-moeda')?.value||'EUR';
     if(!qty||!pm){toast('Preenche a quantidade e o preço médio');return;}
     const fxRate=moeda==='GBX'?(await getEurRate('GBP'))/100:await getEurRate(moeda);
-    ativo.qty=qty;ativo.moedaCompra=moeda;ativo.precoMedioOriginal=pm;ativo.precoMedio=Math.round(pm*fxRate*10000)/10000;ativo.precoAtual=pa||ativo.precoMedio;
+    ativo.qty=qty;ativo.moedaCompra=moeda;ativo.precoMedioOriginal=pm;ativo.precoMedio=Math.round(pm*fxRate*10000)/10000;
+    // Se não há preço atual, tentar buscar automaticamente
+    if(pa){ativo.precoAtual=pa;}
+    else{
+      toast('A buscar preço atual...');
+      const fetched=await fetchPrice(ticker);
+      ativo.precoAtual=fetched||ativo.precoMedio;
+    }
   }
   currentP().ativos.push(ativo);saveAtivos();resetForm();toast('✓ Ativo adicionado!');showPage('dashboard');
 });
