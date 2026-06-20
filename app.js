@@ -694,22 +694,26 @@ document.getElementById('btn-importar-analisar').addEventListener('click', async
     document.getElementById('import-loading').querySelector('span').textContent='A verificar tickers...';
     const resolved = await Promise.all(positions.map(async p => {
       if (!p.ticker) return p;
-      // Already has suffix or is crypto - skip
       if (p.ticker.includes('.') || p.ticker.includes('-')) return p;
-      // Try suffixes to find the right exchange
-      const suffixes = ['.DE','.L','.PA','.AS','.MC','.MI','.LS','.SW','.BR','.HE','.ST','.OL','.CO','.VI','.WA','.T','.HK','.AX','.SA','.NS','.KS','.TO'];
-      for (const suffix of suffixes) {
-        const data = await yahooFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${p.ticker+suffix}?interval=1d&range=1d`);
-        if (data?.chart?.result?.[0]?.meta?.regularMarketPrice) {
-          return { ...p, ticker: p.ticker + suffix };
-        }
-      }
-      // Try search by name
-      if (p.nome) {
-        const found = await searchTicker(p.nome);
-        if (found) return { ...p, ticker: found };
-      }
-      return p;
+      // Test all suffixes in parallel, pick the one with highest volume
+      const suffixes = ['','.DE','.L','.PA','.AS','.MC','.MI','.LS','.SW','.BR','.HE','.ST','.OL','.CO','.VI','.WA','.T','.HK','.AX','.SA','.NS','.KS','.TO'];
+      const results = await Promise.all(suffixes.map(async suffix => {
+        try {
+          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${p.ticker+suffix}?interval=1d&range=1d`;
+          const data = await yahooFetch(url);
+          const meta = data?.chart?.result?.[0]?.meta;
+          if (!meta?.regularMarketPrice) return null;
+          return {
+            ticker: p.ticker+suffix,
+            volume: meta.regularMarketVolume || meta.averageDailyVolume3Month || 0
+          };
+        } catch { return null; }
+      }));
+      // Pick the result with highest volume
+      const valid = results.filter(r => r !== null);
+      if (valid.length === 0) return p;
+      const best = valid.reduce((a, b) => b.volume > a.volume ? b : a);
+      return { ...p, ticker: best.ticker };
     }));
     importPositions=resolved;
     document.getElementById('import-loading').style.display='none';
