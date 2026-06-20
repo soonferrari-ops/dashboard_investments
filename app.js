@@ -558,13 +558,16 @@ if(uploadZone) {
 if(imgUpload) imgUpload.addEventListener('change',function(e){if(e.target.files[0])handleImageFile(e.target.files[0]);});
 
 function handleImageFile(file) {
+  // Use file.type directly - most reliable way to get media type
+  importMediaType = file.type || 'image/jpeg';
+  // Anthropic only accepts these types
+  if (!['image/jpeg','image/png','image/gif','image/webp'].includes(importMediaType)) {
+    importMediaType = 'image/jpeg';
+  }
   const reader=new FileReader();
   reader.onload=function(e){
     const dataUrl=e.target.result;
     importImageBase64=dataUrl.split(',')[1];
-    // Detect media type from data URL
-    const match=dataUrl.match(/data:([^;]+);/);
-    importMediaType=match?match[1]:'image/jpeg';
     document.getElementById('img-preview').src=e.target.result;
     document.getElementById('img-preview-wrap').style.display='block';
     document.getElementById('upload-zone').style.display='none';
