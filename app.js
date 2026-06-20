@@ -374,7 +374,7 @@ function renderAtivos() {
   const ativos=mergeAtivos(rawAtivos);
   const hasDupes=rawAtivos.length>ativos.length;
   document.getElementById('ativos-title').textContent=p.nome;
-  document.getElementById('ativos-sub').textContent=ativos.length+' posições'+(hasDupes?` <button onclick="consolidarERefresh()" style="margin-left:8px;background:rgba(91,141,238,0.15);border:1px solid rgba(91,141,238,0.3);color:var(--accent);font-size:11px;padding:2px 8px;border-radius:4px;cursor:pointer">⊕ Consolidar duplicados</button>`:'');
+  document.getElementById('ativos-sub').innerHTML=ativos.length+' posições'+(hasDupes?` <button onclick="consolidarERefresh()" style="margin-left:8px;background:rgba(91,141,238,0.15);border:1px solid rgba(91,141,238,0.3);color:var(--accent);font-size:11px;padding:2px 8px;border-radius:4px;cursor:pointer">⊕ Consolidar duplicados</button>`:'');
   const tbody=document.getElementById('ativos-tbody'),table=document.getElementById('ativos-table'),empty=document.getElementById('ativos-empty');
   tbody.innerHTML='';
   if(ativos.length===0){table.style.display='none';empty.style.display='block';return;}
