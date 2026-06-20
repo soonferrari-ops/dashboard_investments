@@ -137,7 +137,7 @@ async function prefetchAllRates() {
   fxFetchedAll=true;
 }
 
-async function fetchPrice(ticker) {
+async function fetchPriceRaw(ticker) {
   const data = await yahooFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`);
   if (!data) return null;
   const meta = data.chart.result[0].meta;
@@ -147,6 +147,24 @@ async function fetchPrice(ticker) {
   if (currency==='GBX') price=price/100;
   const eurRate = await getEurRate(currency==='GBX'?'GBP':currency);
   return Math.round(price*eurRate*10000)/10000;
+}
+
+async function fetchPrice(ticker) {
+  // Try the ticker as-is first
+  const direct = await fetchPriceRaw(ticker);
+  if (direct) return direct;
+  // If it fails and has no suffix, try common exchange suffixes
+  if (!ticker.includes('.') && !ticker.includes('-')) {
+    const suffixes = ['.DE','.L','.PA','.AS','.MC','.MI','.LS','.SW','.BR','.HE','.ST','.OL','.CO'];
+    for (const suffix of suffixes) {
+      const result = await fetchPriceRaw(ticker + suffix);
+      if (result) {
+        console.log(`Found ${ticker} as ${ticker+suffix}`);
+        return result;
+      }
+    }
+  }
+  return null;
 }
 
 async function fetchHistoricalPrices(ticker, period) {
@@ -367,6 +385,21 @@ function renderPieChart() {
   legend.innerHTML=labels.map((l,i)=>`<div class="legend-item"><span class="legend-dot" style="background:${colors[i]}"></span>${l} ${total>0?((data[i]/total)*100).toFixed(1):0}%</div>`).join('');
   if(pieChart) pieChart.destroy();
   pieChart=new Chart(canvas,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmt(ctx.raw)} (${((ctx.raw/total)*100).toFixed(1)}%)`},backgroundColor:'#1a1e28',borderColor:'#252935',borderWidth:1,bodyColor:'#e8eaf0',padding:10}}}});
+}
+
+// ── Ordenação ─────────────────────────────────────────────────────
+function sortAtivos(ativos) {
+  const sorted = [...ativos];
+  switch(currentSort) {
+    case 'gl-eur':  return sorted.sort((a,b)=>(valorAtivo(b)-custoAtivo(b))-(valorAtivo(a)-custoAtivo(a)));
+    case 'gl-pct':  return sorted.sort((a,b)=>{
+      const pA=custoAtivo(a)>0?(valorAtivo(a)-custoAtivo(a))/custoAtivo(a):0;
+      const pB=custoAtivo(b)>0?(valorAtivo(b)-custoAtivo(b))/custoAtivo(b):0;
+      return pB-pA;
+    });
+    case 'ticker':  return sorted.sort((a,b)=>a.ticker.localeCompare(b.ticker));
+    default:        return sorted.sort((a,b)=>valorAtivo(b)-valorAtivo(a));
+  }
 }
 
 // ── Ativos ────────────────────────────────────────────────────────
@@ -701,6 +734,30 @@ document.getElementById('btn-refresh-all').addEventListener('click', atualizarTo
 document.getElementById('btn-clear-key').addEventListener('click',function(){
   if(getApiKey()){if(confirm('Apagar a chave API guardada?')){localStorage.removeItem(API_KEY_STORAGE);toast('✓ Chave apagada');}}
   else{toast('Não há chave guardada');}
+});
+
+// ── Sort ──────────────────────────────────────────────────────────
+document.addEventListener('click', function(e) {
+  const sortMenu = document.getElementById('sort-menu');
+  const btnSort = document.getElementById('btn-sort');
+  if (!sortMenu) return;
+  if (e.target.closest('#btn-sort')) {
+    e.stopPropagation();
+    sortMenu.style.display = sortMenu.style.display==='none'?'block':'none';
+    return;
+  }
+  if (e.target.closest('.sort-option')) {
+    const opt = e.target.closest('.sort-option');
+    currentSort = opt.dataset.sort;
+    document.querySelectorAll('.sort-option').forEach(o=>o.classList.remove('active'));
+    opt.classList.add('active');
+    const labels = {'valor':'Valor','gl-eur':'G/P €','gl-pct':'G/P %','ticker':'A-Z'};
+    btnSort.textContent = '↕ '+(labels[currentSort]||'Ordenar');
+    sortMenu.style.display = 'none';
+    renderAtivos();
+    return;
+  }
+  sortMenu.style.display = 'none';
 });
 
 // ── Init ──────────────────────────────────────────────────────────
