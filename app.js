@@ -30,6 +30,7 @@ let selectedType  = 'Ação';
 let selectedBroker = 'Trading 212';
 let evoChart = null, pieChart = null, currentPeriod = '1m';
 let importImageBase64 = null, importPositions = [], importMediaType = 'image/jpeg';
+let currentSort = 'valor';
 
 function currentP()  { return portfolios.find(p=>p.id===currentPortfolioId)||portfolios[0]; }
 function getAtivos() { return currentP().ativos; }
@@ -380,7 +381,7 @@ function renderAtivos() {
   if(ativos.length===0){table.style.display='none';empty.style.display='block';return;}
   table.style.display='table';empty.style.display='none';
   const total=calcTotal();
-  [...ativos].sort((a,b)=>valorAtivo(b)-valorAtivo(a)).forEach(a=>{
+  sortAtivos(ativos).forEach(a=>{
     const val=valorAtivo(a),custo=custoAtivo(a),gl=val-custo,glPct=custo>0?(gl/custo)*100:0,peso=total>0?(val/total)*100:0,cor=COLORS[a.tipo]||'#888';
     const pmDisplay=a.moedaCompra&&a.moedaCompra!=='EUR'?`<span style="font-size:11px;color:var(--text2)">${a.moedaCompra} ${Number(a.precoMedioOriginal||a.precoMedio).toFixed(2)}</span><br>${fmt(a.precoMedio)}`:fmt(a.precoMedio);
     const editIdx = a._indices ? a._indices[0] : rawAtivos.indexOf(a);

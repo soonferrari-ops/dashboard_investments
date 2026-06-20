@@ -173,7 +173,17 @@
           <h1 class="page-title" id="ativos-title">Ativos</h1>
           <p class="page-sub" id="ativos-sub">—</p>
         </div>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="sort-dropdown">
+            <button class="btn btn-ghost" id="btn-sort">↕ Ordenar</button>
+            <div class="sort-menu" id="sort-menu" style="display:none">
+              <div class="sort-option active" data-sort="valor">Valor</div>
+              <div class="sort-option" data-sort="gl-eur">Ganho/Perda €</div>
+              <div class="sort-option" data-sort="gl-pct">Ganho/Perda %</div>
+              <div class="sort-option" data-sort="ticker">Ticker A-Z</div>
+              <div class="sort-option" data-sort="peso">Peso</div>
+            </div>
+          </div>
           <button class="btn btn-ghost" id="btn-consolidar">⊕ Consolidar</button>
           <button class="btn btn-primary" data-page="adicionar">+ Adicionar</button>
         </div>
