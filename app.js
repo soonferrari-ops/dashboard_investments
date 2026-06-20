@@ -381,7 +381,7 @@ function renderAtivos() {
   table.style.display='table';empty.style.display='none';
   const total=calcTotal();
   [...ativos].sort((a,b)=>valorAtivo(b)-valorAtivo(a)).forEach(a=>{
-    const realIdx=ativos.indexOf(a),val=valorAtivo(a),custo=custoAtivo(a),gl=val-custo,glPct=custo>0?(gl/custo)*100:0,peso=total>0?(val/total)*100:0,cor=COLORS[a.tipo]||'#888';
+    const val=valorAtivo(a),custo=custoAtivo(a),gl=val-custo,glPct=custo>0?(gl/custo)*100:0,peso=total>0?(val/total)*100:0,cor=COLORS[a.tipo]||'#888';
     const pmDisplay=a.moedaCompra&&a.moedaCompra!=='EUR'?`<span style="font-size:11px;color:var(--text2)">${a.moedaCompra} ${Number(a.precoMedioOriginal||a.precoMedio).toFixed(2)}</span><br>${fmt(a.precoMedio)}`:fmt(a.precoMedio);
     const editIdx = a._indices ? a._indices[0] : rawAtivos.indexOf(a);
     const tr=document.createElement('tr');
