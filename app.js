@@ -8,8 +8,8 @@ let fxFetchedAll = false;
 
 // ── Helpers ───────────────────────────────────────────────────────
 function uid() { return Math.random().toString(36).slice(2,10); }
-function fmt(n) { return '€'+Number(n).toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function fmtPct(n) { return (n>=0?'+':'')+Number(n).toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2})+'%'; }
+function fmt(n) { return '€'+Number(n).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtPct(n) { return (n>=0?'+':'')+Number(n).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2})+'%'; }
 function getApiKey() { return localStorage.getItem(API_KEY_STORAGE)||''; }
 function askApiKey() {
   const k = window.prompt('Introduz a tua chave API da Anthropic (começa por sk-ant-):\n\nFica guardada apenas no teu browser.');
@@ -155,7 +155,7 @@ async function fetchPrice(ticker) {
   if (direct) return direct;
   // If it fails and has no suffix, try common exchange suffixes
   if (!ticker.includes('.') && !ticker.includes('-')) {
-    const suffixes = ['.DE','.L','.PA','.AS','.MC','.MI','.LS','.SW','.BR','.HE','.ST','.OL','.CO'];
+    const suffixes = ['.DE','.L','.PA','.AS','.MC','.MI','.LS','.SW','.BR','.HE','.ST','.OL','.CO','.VI','.WA','.AT','.T','.HK','.AX','.SA','.NS','.KS','.TO','.MX'];
     for (const suffix of suffixes) {
       const result = await fetchPriceRaw(ticker + suffix);
       if (result) {
@@ -419,7 +419,7 @@ function renderAtivos() {
     const pmDisplay=a.moedaCompra&&a.moedaCompra!=='EUR'?`<span style="font-size:11px;color:var(--text2)">${a.moedaCompra} ${Number(a.precoMedioOriginal||a.precoMedio).toFixed(2)}</span><br>${fmt(a.precoMedio)}`:fmt(a.precoMedio);
     const editIdx = a._indices ? a._indices[0] : rawAtivos.indexOf(a);
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td><div class="ticker-name">${a.ticker}</div><div class="ticker-full">${a.nome}${a._indices&&a._indices.length>1?` <span style="font-size:10px;color:var(--text3)">(${a._indices.length}×)</span>`:''}</div></td><td><span class="tag tag-${a.tipo}">${a.tipo}</span></td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':Number(a.qty).toLocaleString('pt-PT')}</td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':pmDisplay}</td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':fmt(parseFloat(a.precoAtual)||0)}</td><td class="right" style="font-family:var(--mono)">${fmt(val)}</td><td class="right"><div class="${gl>=0?'pos':'neg'}" style="font-family:var(--mono)">${fmt(gl)}</div><div class="${gl>=0?'pos':'neg'}" style="font-size:11px">${fmtPct(glPct)}</div></td><td class="right"><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><div class="bar-wrap"><div class="bar" style="width:${Math.min(peso,100)}%;background:${cor}"></div></div><span style="font-size:12px;font-family:var(--mono);color:var(--text2)">${peso.toFixed(1)}%</span></div></td><td><button class="btn-icon" data-edit="${editIdx}">✎</button></td>`;
+    tr.innerHTML=`<td><div class="ticker-name">${a.ticker}</div><div class="ticker-full">${a.nome}${a._indices&&a._indices.length>1?` <span style="font-size:10px;color:var(--text3)">(${a._indices.length}×)</span>`:''}</div></td><td><span class="tag tag-${a.tipo}">${a.tipo}</span></td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':Number(a.qty).toLocaleString('en-GB')}</td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':pmDisplay}</td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':fmt(parseFloat(a.precoAtual)||0)}</td><td class="right" style="font-family:var(--mono)">${fmt(val)}</td><td class="right"><div class="${gl>=0?'pos':'neg'}" style="font-family:var(--mono)">${fmt(gl)}</div><div class="${gl>=0?'pos':'neg'}" style="font-size:11px">${fmtPct(glPct)}</div></td><td class="right"><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><div class="bar-wrap"><div class="bar" style="width:${Math.min(peso,100)}%;background:${cor}"></div></div><span style="font-size:12px;font-family:var(--mono);color:var(--text2)">${peso.toFixed(1)}%</span></div></td><td><button class="btn-icon" data-edit="${editIdx}">✎</button></td>`;
     tbody.appendChild(tr);
   });
   document.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',()=>openModal(parseInt(btn.dataset.edit))));
