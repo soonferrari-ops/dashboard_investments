@@ -219,9 +219,10 @@ const FX_CACHE = {};
 
 // Proxies CORS em sequência — tenta o próximo se o anterior falhar
 const PROXIES = [
-  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
   url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+  url => `https://thingproxy.freeboard.io/fetch/${url}`,
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
 ];
 
 async function yahooFetch(yahooUrl) {
@@ -324,14 +325,14 @@ document.getElementById('btn-refresh-all').addEventListener('click',atualizarTod
 // ── Análise IA ─────────────────────────────────────────────────────
 document.getElementById('btn-analisar').addEventListener('click',async()=>{
   const ativos=getAtivos();if(ativos.length===0){toast('Adiciona pelo menos um ativo primeiro');return;}
-  if(!getApiKey()){const chave=prompt('Introduz a tua chave API da Anthropic (começa por sk-ant-):\n\nFica guardada apenas no teu browser.');if(!chave||!chave.trim().startsWith('sk-ant-')){toast('Chave inválida');return;}localStorage.setItem(API_KEY_STORAGE,chave.trim());toast('✓ Chave guardada');}
+  if(!getApiKey()){const chave=window.prompt('Introduz a tua chave API da Anthropic (começa por sk-ant-):\n\nFica guardada apenas no teu browser.');if(!chave||!chave.trim().startsWith('sk-ant-')){toast('Chave inválida');return;}localStorage.setItem(API_KEY_STORAGE,chave.trim());toast('✓ Chave guardada');}
   const empty=document.getElementById('ai-empty'),loading=document.getElementById('ai-loading'),result=document.getElementById('ai-result');
   empty.style.display='none';loading.style.display='flex';result.style.display='none';
   const total=calcTotal(),custo=calcCusto(),gl=total-custo,glPct=custo>0?((gl/custo)*100).toFixed(2):0;
   const resume=ativos.map(a=>{const val=valorAtivo(a),c=custoAtivo(a),g=val-c,gPct=c>0?((g/c)*100).toFixed(1):0,peso=total>0?((val/total)*100).toFixed(1):0;if(a.tipo==='Cash')return `- ${a.ticker} (Cash): €${val.toFixed(2)}, peso: ${peso}%`;return `- ${a.ticker} (${a.nome}) [${a.tipo}]: ${a.qty} unidades, preço médio €${parseFloat(a.precoMedio).toFixed(2)}, preço atual €${parseFloat(a.precoAtual).toFixed(2)}, valor €${val.toFixed(2)}, G/P: ${g>=0?'+':''}€${g.toFixed(2)} (${gPct}%), peso: ${peso}%`;}).join('\n');
-  const prompt=`Analisa o portfolio "${currentP().nome}" de um investidor português.\n\nValor total: €${total.toFixed(2)}\nCusto base: €${custo.toFixed(2)}\nGanho/Perda: €${gl.toFixed(2)} (${glPct}%)\n\nPOSIÇÕES:\n${resume}\n\nPor favor:\n1. Avaliação geral (diversificação, risco)\n2. Pontos fortes\n3. Riscos ou pontos de atenção\n4. 2-3 sugestões concretas\n5. Nota de 1 a 10 com justificação\n\nUsa ### para títulos. Responde em português de Portugal. Não dês conselhos financeiros formais.`;
+  const aiPrompt=`Analisa o portfolio "${currentP().nome}" de um investidor português.\n\nValor total: €${total.toFixed(2)}\nCusto base: €${custo.toFixed(2)}\nGanho/Perda: €${gl.toFixed(2)} (${glPct}%)\n\nPOSIÇÕES:\n${resume}\n\nPor favor:\n1. Avaliação geral (diversificação, risco)\n2. Pontos fortes\n3. Riscos ou pontos de atenção\n4. 2-3 sugestões concretas\n5. Nota de 1 a 10 com justificação\n\nUsa ### para títulos. Responde em português de Portugal. Não dês conselhos financeiros formais.`;
   try{
-    const response=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const response=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:aiPrompt}]})});
     const data=await response.json(),text=data.content?.[0]?.text||'Sem resposta.';
     const html=text.replace(/### (.+)/g,'<h3>$1</h3>').replace(/## (.+)/g,'<h3>$1</h3>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/^\- (.+)/gm,'<li>$1</li>').replace(/(<li>.*<\/li>)/gs,'<ul>$1</ul>').replace(/\n\n/g,'</p><p>').replace(/^(?!<)(.+)/gm,'<p>$1</p>');
     loading.style.display='none';result.style.display='block';result.innerHTML=html;
