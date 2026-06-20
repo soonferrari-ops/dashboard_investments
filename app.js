@@ -44,6 +44,30 @@ function saveAtivos() {
   saveAll();
 }
 
+
+// ── Agrupar ativos com mesmo ticker ──────────────────────────────
+function mergeAtivos(ativos) {
+  const map = {};
+  ativos.forEach(a => {
+    const key = a.ticker + '|' + a.tipo;
+    if (!map[key]) {
+      map[key] = { ...a, qty: parseFloat(a.qty)||0, _totalCusto: (parseFloat(a.qty)||0)*(parseFloat(a.precoMedio)||0) };
+    } else {
+      const existing = map[key];
+      const newQty = (parseFloat(a.qty)||0);
+      const newCusto = newQty * (parseFloat(a.precoMedio)||0);
+      const totalQty = existing.qty + newQty;
+      existing._totalCusto += newCusto;
+      existing.precoMedio = totalQty > 0 ? existing._totalCusto / totalQty : 0;
+      existing.precoMedioOriginal = existing.precoMedio;
+      existing.qty = totalQty;
+      // Keep latest precoAtual
+      existing.precoAtual = parseFloat(a.precoAtual) || existing.precoAtual;
+    }
+  });
+  return Object.values(map).map(a => { delete a._totalCusto; return a; });
+}
+
 // ── Cálculos ──────────────────────────────────────────────────────
 function valorAtivo(a)      { return a.tipo==='Cash'?parseFloat(a.cashVal)||0:(parseFloat(a.qty)||0)*(parseFloat(a.precoAtual)||0); }
 function custoAtivo(a)      { return a.tipo==='Cash'?parseFloat(a.cashVal)||0:(parseFloat(a.qty)||0)*(parseFloat(a.precoMedio)||0); }
@@ -282,7 +306,7 @@ function renderDashboard() {
 }
 
 function renderDashTable() {
-  const ativos=getAtivos(),tbody=document.getElementById('dash-tbody'),table=document.getElementById('dash-table'),empty=document.getElementById('dash-empty');
+  const ativos=mergeAtivos(getAtivos()),tbody=document.getElementById('dash-tbody'),table=document.getElementById('dash-table'),empty=document.getElementById('dash-empty');
   tbody.innerHTML='';
   if(ativos.length===0){table.style.display='none';empty.style.display='block';return;}
   table.style.display='table';empty.style.display='none';
@@ -322,7 +346,7 @@ document.querySelectorAll('.chart-tab').forEach(btn=>btn.addEventListener('click
 }));
 
 function renderPieChart() {
-  const ativos=getAtivos(),canvas=document.getElementById('pieChart'),empty=document.getElementById('pie-empty'),legend=document.getElementById('pie-legend'),donutLabel=document.getElementById('donut-label');
+  const ativos=mergeAtivos(getAtivos()),canvas=document.getElementById('pieChart'),empty=document.getElementById('pie-empty'),legend=document.getElementById('pie-legend'),donutLabel=document.getElementById('donut-label');
   if(ativos.length===0){canvas.style.display='none';empty.classList.add('visible');legend.innerHTML='';donutLabel.textContent='—';if(pieChart){pieChart.destroy();pieChart=null;}return;}
   canvas.style.display='block';empty.classList.remove('visible');
   const tipos=['Ação','ETF','Cripto','Cash'],total=calcTotal();
@@ -336,7 +360,7 @@ function renderPieChart() {
 
 // ── Ativos ────────────────────────────────────────────────────────
 function renderAtivos() {
-  const ativos=getAtivos(),p=currentP();
+  const ativos=mergeAtivos(getAtivos()),p=currentP();
   document.getElementById('ativos-title').textContent=p.nome;
   document.getElementById('ativos-sub').textContent=ativos.length+' posições';
   const tbody=document.getElementById('ativos-tbody'),table=document.getElementById('ativos-table'),empty=document.getElementById('ativos-empty');
