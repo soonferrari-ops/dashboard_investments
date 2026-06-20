@@ -137,6 +137,20 @@ async function prefetchAllRates() {
   fxFetchedAll=true;
 }
 
+async function searchTicker(name) {
+  // Search Yahoo Finance for the correct ticker by company name
+  try {
+    const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(name)}&quotesCount=5&newsCount=0&listsCount=0`;
+    const data = await yahooFetch(url);
+    const quotes = data?.quotes || [];
+    // Prefer equity results
+    const equity = quotes.find(q => q.quoteType === 'EQUITY' || q.quoteType === 'ETF');
+    if (equity) return equity.symbol;
+    if (quotes.length > 0) return quotes[0].symbol;
+  } catch {}
+  return null;
+}
+
 async function fetchPriceRaw(ticker) {
   const data = await yahooFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`);
   if (!data) return null;
@@ -149,7 +163,7 @@ async function fetchPriceRaw(ticker) {
   return Math.round(price*eurRate*10000)/10000;
 }
 
-async function fetchPrice(ticker) {
+async function fetchPrice(ticker, name) {
   // Try the ticker as-is first
   const direct = await fetchPriceRaw(ticker);
   if (direct) return direct;
@@ -158,9 +172,14 @@ async function fetchPrice(ticker) {
     const suffixes = ['.DE','.L','.PA','.AS','.MC','.MI','.LS','.SW','.BR','.HE','.ST','.OL','.CO','.VI','.WA','.AT','.T','.HK','.AX','.SA','.NS','.KS','.TO','.MX'];
     for (const suffix of suffixes) {
       const result = await fetchPriceRaw(ticker + suffix);
-      if (result) {
-        console.log(`Found ${ticker} as ${ticker+suffix}`);
-        return result;
+      if (result) return result;
+    }
+    // Last resort: search by name on Yahoo Finance
+    if (name) {
+      const foundTicker = await searchTicker(name);
+      if (foundTicker && foundTicker !== ticker) {
+        const result = await fetchPriceRaw(foundTicker);
+        if (result) return result;
       }
     }
   }
@@ -192,7 +211,7 @@ async function atualizarTodosPrecos() {
   const ativos = getAtivos(); let n=0;
   for (let i=0;i<ativos.length;i++) {
     if (ativos[i].tipo==='Cash') continue;
-    const price = await fetchPrice(ativos[i].ticker);
+    const price = await fetchPrice(ativos[i].ticker, ativos[i].nome);
     if (price) { ativos[i].precoAtual=price; n++; }
   }
   saveAtivos(); renderDashboard(); renderAtivos();
@@ -511,7 +530,7 @@ document.getElementById('btn-guardar').addEventListener('click', async function(
     ativo.qty=qty;ativo.moedaCompra=moeda;ativo.precoMedioOriginal=pm;
     ativo.precoMedio=Math.round(pm*fxRate*10000)/10000;
     if(pa) { ativo.precoAtual=pa; }
-    else { toast('A buscar preço...'); const fetched=await fetchPrice(ticker); ativo.precoAtual=fetched||ativo.precoMedio; }
+    else { toast('A buscar preço...'); const fetched=await fetchPrice(ticker, nome); ativo.precoAtual=fetched||ativo.precoMedio; }
   }
   currentP().ativos.push(ativo);
   saveAtivos();resetForm();toast('✓ Ativo adicionado!');showPage('dashboard');
@@ -671,11 +690,32 @@ document.getElementById('btn-importar-analisar').addEventListener('click', async
     let positions=[];
     try{const clean=text.replace(/```json|```/g,'').trim();positions=JSON.parse(clean);}
     catch{toast('Não foi possível ler as posições. Tenta com uma imagem mais clara.');}
-    importPositions=positions;
+    // Resolve tickers with correct exchange suffixes before showing table
+    document.getElementById('import-loading').querySelector('span').textContent='A verificar tickers...';
+    const resolved = await Promise.all(positions.map(async p => {
+      if (!p.ticker) return p;
+      // Already has suffix or is crypto - skip
+      if (p.ticker.includes('.') || p.ticker.includes('-')) return p;
+      // Try suffixes to find the right exchange
+      const suffixes = ['.DE','.L','.PA','.AS','.MC','.MI','.LS','.SW','.BR','.HE','.ST','.OL','.CO','.VI','.WA','.T','.HK','.AX','.SA','.NS','.KS','.TO'];
+      for (const suffix of suffixes) {
+        const data = await yahooFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${p.ticker+suffix}?interval=1d&range=1d`);
+        if (data?.chart?.result?.[0]?.meta?.regularMarketPrice) {
+          return { ...p, ticker: p.ticker + suffix };
+        }
+      }
+      // Try search by name
+      if (p.nome) {
+        const found = await searchTicker(p.nome);
+        if (found) return { ...p, ticker: found };
+      }
+      return p;
+    }));
+    importPositions=resolved;
     document.getElementById('import-loading').style.display='none';
     document.getElementById('import-result').style.display='block';
     document.getElementById('import-actions').style.display='block';
-    renderImportTable(positions);
+    renderImportTable(resolved);
   } catch(err) {
     document.getElementById('import-loading').style.display='none';
     document.getElementById('import-actions').style.display='block';
@@ -712,7 +752,7 @@ document.getElementById('btn-import-guardar').addEventListener('click', async fu
     if(!ticker||!qty||!pm) continue;
     const fxRate=moeda==='GBX'?(await getEurRate('GBP'))/100:await getEurRate(moeda);
     const precoMedioEur=Math.round(pm*fxRate*10000)/10000;
-    const precoAtual=await fetchPrice(ticker)||precoMedioEur;
+    const precoAtual=await fetchPrice(ticker, nome)||precoMedioEur;
     currentP().ativos.push({tipo,ticker,nome:nome||ticker,qty,moedaCompra:moeda,precoMedioOriginal:pm,precoMedio:precoMedioEur,precoAtual});
     saved++;
   }
