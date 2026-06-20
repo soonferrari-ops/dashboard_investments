@@ -48,24 +48,34 @@ function saveAtivos() {
 // ── Agrupar ativos com mesmo ticker ──────────────────────────────
 function mergeAtivos(ativos) {
   const map = {};
-  ativos.forEach(a => {
-    const key = a.ticker + '|' + a.tipo;
+  ativos.forEach((a, idx) => {
+    const key = a.ticker.toUpperCase() + '|' + a.tipo;
     if (!map[key]) {
-      map[key] = { ...a, qty: parseFloat(a.qty)||0, _totalCusto: (parseFloat(a.qty)||0)*(parseFloat(a.precoMedio)||0) };
+      const qty = parseFloat(a.qty)||0;
+      map[key] = { ...a, qty, _totalCusto: qty*(parseFloat(a.precoMedio)||0), _indices:[idx] };
     } else {
       const existing = map[key];
-      const newQty = (parseFloat(a.qty)||0);
-      const newCusto = newQty * (parseFloat(a.precoMedio)||0);
+      const newQty = parseFloat(a.qty)||0;
       const totalQty = existing.qty + newQty;
-      existing._totalCusto += newCusto;
-      existing.precoMedio = totalQty > 0 ? existing._totalCusto / totalQty : 0;
+      existing._totalCusto += newQty*(parseFloat(a.precoMedio)||0);
+      existing.precoMedio = totalQty>0 ? existing._totalCusto/totalQty : 0;
       existing.precoMedioOriginal = existing.precoMedio;
+      existing.moedaCompra = 'EUR'; // merged always in EUR
       existing.qty = totalQty;
-      // Keep latest precoAtual
-      existing.precoAtual = parseFloat(a.precoAtual) || existing.precoAtual;
+      existing.precoAtual = parseFloat(a.precoAtual)||existing.precoAtual;
+      existing._indices.push(idx);
     }
   });
-  return Object.values(map).map(a => { delete a._totalCusto; return a; });
+  return Object.values(map).map(a => { const r={...a}; delete r._totalCusto; return r; });
+}
+
+// Consolidar ativos duplicados nos dados reais
+function consolidarAtivos() {
+  const ativos = getAtivos();
+  const merged = mergeAtivos(ativos);
+  // Remove _indices from merged result and save
+  currentP().ativos = merged.map(a => { const r={...a}; delete r._indices; return r; });
+  saveAtivos();
 }
 
 // ── Cálculos ──────────────────────────────────────────────────────
@@ -360,9 +370,11 @@ function renderPieChart() {
 
 // ── Ativos ────────────────────────────────────────────────────────
 function renderAtivos() {
-  const ativos=mergeAtivos(getAtivos()),p=currentP();
+  const rawAtivos=getAtivos(),p=currentP();
+  const ativos=mergeAtivos(rawAtivos);
+  const hasDupes=rawAtivos.length>ativos.length;
   document.getElementById('ativos-title').textContent=p.nome;
-  document.getElementById('ativos-sub').textContent=ativos.length+' posições';
+  document.getElementById('ativos-sub').textContent=ativos.length+' posições'+(hasDupes?` <button onclick="consolidarERefresh()" style="margin-left:8px;background:rgba(91,141,238,0.15);border:1px solid rgba(91,141,238,0.3);color:var(--accent);font-size:11px;padding:2px 8px;border-radius:4px;cursor:pointer">⊕ Consolidar duplicados</button>`:'');
   const tbody=document.getElementById('ativos-tbody'),table=document.getElementById('ativos-table'),empty=document.getElementById('ativos-empty');
   tbody.innerHTML='';
   if(ativos.length===0){table.style.display='none';empty.style.display='block';return;}
@@ -371,8 +383,9 @@ function renderAtivos() {
   [...ativos].sort((a,b)=>valorAtivo(b)-valorAtivo(a)).forEach(a=>{
     const realIdx=ativos.indexOf(a),val=valorAtivo(a),custo=custoAtivo(a),gl=val-custo,glPct=custo>0?(gl/custo)*100:0,peso=total>0?(val/total)*100:0,cor=COLORS[a.tipo]||'#888';
     const pmDisplay=a.moedaCompra&&a.moedaCompra!=='EUR'?`<span style="font-size:11px;color:var(--text2)">${a.moedaCompra} ${Number(a.precoMedioOriginal||a.precoMedio).toFixed(2)}</span><br>${fmt(a.precoMedio)}`:fmt(a.precoMedio);
+    const editIdx = a._indices ? a._indices[0] : rawAtivos.indexOf(a);
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td><div class="ticker-name">${a.ticker}</div><div class="ticker-full">${a.nome}</div></td><td><span class="tag tag-${a.tipo}">${a.tipo}</span></td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':Number(a.qty).toLocaleString('pt-PT')}</td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':pmDisplay}</td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':fmt(parseFloat(a.precoAtual)||0)}</td><td class="right" style="font-family:var(--mono)">${fmt(val)}</td><td class="right"><div class="${gl>=0?'pos':'neg'}" style="font-family:var(--mono)">${fmt(gl)}</div><div class="${gl>=0?'pos':'neg'}" style="font-size:11px">${fmtPct(glPct)}</div></td><td class="right"><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><div class="bar-wrap"><div class="bar" style="width:${Math.min(peso,100)}%;background:${cor}"></div></div><span style="font-size:12px;font-family:var(--mono);color:var(--text2)">${peso.toFixed(1)}%</span></div></td><td><button class="btn-icon" data-edit="${realIdx}">✎</button></td>`;
+    tr.innerHTML=`<td><div class="ticker-name">${a.ticker}</div><div class="ticker-full">${a.nome}${a._indices&&a._indices.length>1?` <span style="font-size:10px;color:var(--text3)">(${a._indices.length}×)</span>`:''}</div></td><td><span class="tag tag-${a.tipo}">${a.tipo}</span></td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':Number(a.qty).toLocaleString('pt-PT')}</td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':pmDisplay}</td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':fmt(parseFloat(a.precoAtual)||0)}</td><td class="right" style="font-family:var(--mono)">${fmt(val)}</td><td class="right"><div class="${gl>=0?'pos':'neg'}" style="font-family:var(--mono)">${fmt(gl)}</div><div class="${gl>=0?'pos':'neg'}" style="font-size:11px">${fmtPct(glPct)}</div></td><td class="right"><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><div class="bar-wrap"><div class="bar" style="width:${Math.min(peso,100)}%;background:${cor}"></div></div><span style="font-size:12px;font-family:var(--mono);color:var(--text2)">${peso.toFixed(1)}%</span></div></td><td><button class="btn-icon" data-edit="${editIdx}">✎</button></td>`;
     tbody.appendChild(tr);
   });
   document.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',()=>openModal(parseInt(btn.dataset.edit))));
