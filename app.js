@@ -475,6 +475,7 @@ document.addEventListener('click', e => { if (!e.target.closest('#btn-nova-image
   document.getElementById('import-actions').style.display = 'none';
   document.getElementById('import-result').style.display = 'none';
   document.getElementById('img-upload').value = '';
+})();
 });
 
 document.addEventListener('click', async (e) => { if (!e.target.closest('#btn-importar-analisar')) return; (async () => {
