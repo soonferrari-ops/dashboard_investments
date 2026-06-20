@@ -585,7 +585,37 @@ document.getElementById('btn-importar-analisar').addEventListener('click', async
   document.getElementById('import-loading').style.display='flex';
   document.getElementById('import-actions').style.display='none';
   document.getElementById('import-result').style.display='none';
-  const aiPrompt=`Analisa esta screenshot de ${selectedBroker} e extrai todas as posições de investimento visíveis.\n\nPara cada posição, devolve um JSON array com este formato exacto:\n[\n  {\n    "ticker": "AAPL",\n    "nome": "Apple Inc.",\n    "tipo": "Ação",\n    "qty": 10.5,\n    "precoMedio": 150.23,\n    "moeda": "USD"\n  }\n]\n\nRegras:\n- "tipo" deve ser: "Ação", "ETF", "Cripto" ou "Cash"\n- "ticker" deve ser o símbolo de bolsa (ex: AAPL, VWCE, BTC)\n- "moeda" deve ser a moeda em que o preço médio está (USD, EUR, GBP, GBX, etc)\n- "precoMedio" é o preço médio de compra\n- Se não conseguires determinar um campo, usa null\n- Devolve APENAS o JSON, sem texto adicional, sem markdown`;
+  const aiPrompt=`És um assistente especializado em extrair dados de posições de investimento a partir de screenshots de brokers.
+
+Esta screenshot é do broker ${selectedBroker}. Analisa CUIDADOSAMENTE toda a imagem e extrai TODAS as posições visíveis.
+
+Nestes brokers, as posições aparecem normalmente como:
+- Nome da empresa/ativo
+- Quantidade de ações/unidades (ex: "2475.5017 @ 11.252" significa 2475.5017 unidades a preço médio 11.252)
+- Valor atual em EUR ou USD
+- Percentagem de ganho/perda
+
+Para cada posição encontrada, devolve um JSON array:
+[
+  {
+    "ticker": "NOK",
+    "nome": "Nokia",
+    "tipo": "Ação",
+    "qty": 2475.5017,
+    "precoMedio": 11.252,
+    "moeda": "EUR"
+  }
+]
+
+REGRAS IMPORTANTES:
+- Extrai TODAS as posições que vês, mesmo que a imagem seja de baixa qualidade
+- "ticker" deve ser o símbolo Yahoo Finance correto (Nokia=NOK, IQE=IQE.L, etc)
+- "moeda" é a moeda do preço médio de compra (EUR se broker europeu, USD se americano)
+- Para XTB/Trading212 os preços são normalmente em EUR
+- "precoMedio" é o número depois do "@" ou "avg price"
+- "qty" é o número de unidades/ações
+- Se não tiveres a certeza do ticker, usa o nome como ticker
+- Devolve APENAS o JSON array, sem texto, sem markdown, sem explicações`;
   try {
     const response=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/png',data:importImageBase64}},{type:'text',text:aiPrompt}]}]})});
     const data=await response.json();
