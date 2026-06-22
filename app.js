@@ -804,7 +804,7 @@ document.getElementById('btn-importar-analisar').addEventListener('click', async
     document.getElementById('import-loading').style.display='none';
     document.getElementById('import-result').style.display='block';
     document.getElementById('import-actions').style.display='block';
-    renderImportTable(resolved);
+    renderImportTable(positions);
   } catch(err) {
     document.getElementById('import-loading').style.display='none';
     document.getElementById('import-actions').style.display='block';
