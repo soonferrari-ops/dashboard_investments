@@ -809,6 +809,60 @@ function renderImportTable(positions) {
     if(btn.classList.contains('skipped')){btn.classList.remove('skipped');btn.textContent='Ignorar';row.classList.remove('import-row-skip');}
     else{btn.classList.add('skipped');btn.textContent='Ignorado';row.classList.add('import-row-skip');}
   }));
+
+  // Add autocomplete to each ticker input in import table
+  positions.forEach((p, i) => {
+    const input = document.getElementById(`imp-ticker-${i}`);
+    if (!input) return;
+    let acTimeout = null;
+    input.addEventListener('input', function() {
+      clearTimeout(acTimeout);
+      const q = input.value.trim();
+      if (q.length < 2) { hideImportAC(i); return; }
+      acTimeout = setTimeout(async () => {
+        const results = await searchTickerAutocomplete(q);
+        showImportAC(i, results, input);
+      }, 300);
+    });
+    input.addEventListener('blur', () => setTimeout(() => hideImportAC(i), 200));
+  });
+}
+
+function showImportAC(i, results, inputEl) {
+  let dropdown = document.getElementById(`imp-ac-${i}`);
+  if (!dropdown) {
+    dropdown = document.createElement('div');
+    dropdown.id = `imp-ac-${i}`;
+    dropdown.className = 'ticker-autocomplete';
+    document.body.appendChild(dropdown);
+  }
+  if (!results || results.length === 0) { dropdown.style.display='none'; return; }
+  const rect = inputEl.getBoundingClientRect();
+  dropdown.style.position = 'fixed';
+  dropdown.style.top = (rect.bottom + 4) + 'px';
+  dropdown.style.left = rect.left + 'px';
+  dropdown.style.width = rect.width + 'px';
+  dropdown.innerHTML = results.map(r => `
+    <div class="autocomplete-item" data-symbol="${r.symbol}" data-name="${r.shortname||''}">
+      <span class="ac-ticker">${r.symbol}</span>
+      <span class="ac-name">${r.shortname||''}</span>
+      <span class="ac-type">${r.exchDisp||''}</span>
+    </div>`).join('');
+  dropdown.style.display = 'block';
+  dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
+    item.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+      inputEl.value = item.dataset.symbol;
+      const nomeEl = document.getElementById(`imp-nome-${i}`);
+      if (nomeEl) nomeEl.value = item.dataset.name;
+      dropdown.style.display = 'none';
+    });
+  });
+}
+
+function hideImportAC(i) {
+  const d = document.getElementById(`imp-ac-${i}`);
+  if (d) d.style.display = 'none';
 }
 
 document.getElementById('btn-import-guardar').addEventListener('click', async function() {
