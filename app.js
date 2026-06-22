@@ -806,3 +806,155 @@ document.getElementById('btn-importar-analisar').addEventListener('click', async
     '- Devolve APENAS o JSON array, sem texto, sem markdown'
   ].join('\n');
 
+  try {
+    const response=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:importMediaType,data:importImageBase64}},{type:'text',text:aiPrompt}]}]})});
+    const data=await response.json();
+    const text=data.content?.[0]?.text||'[]';
+    let positions=[];
+    try{
+      let clean=text.split('```json').join('').split('```').join('').trim();
+      const start=clean.indexOf('[');
+      const end=clean.lastIndexOf(']');
+      if(start!==-1&&end!==-1) clean=clean.slice(start,end+1);
+      positions=JSON.parse(clean);
+      if(!Array.isArray(positions)) positions=[];
+    } catch(err){
+      console.error('Parse error:',err,'Text:',text);
+      toast('Não foi possível ler as posições. Tenta com uma imagem mais clara.');
+    }
+    importPositions=positions;
+    document.getElementById('import-loading').style.display='none';
+    document.getElementById('import-result').style.display='block';
+    document.getElementById('import-actions').style.display='block';
+    renderImportTable(positions);
+  } catch(err) {
+    console.error('Import AI error:', err);
+    document.getElementById('import-loading').style.display='none';
+    document.getElementById('import-actions').style.display='block';
+    toast('Erro: ' + (err.message||err));
+  }
+});
+
+function renderImportTable(positions) {
+  const wrap=document.getElementById('import-table-wrap'),title=document.getElementById('import-result-title');
+  if(!positions||positions.length===0){wrap.innerHTML='<div class="empty-state"><p>Não foram detetadas posições.<br>Tenta com uma imagem mais clara.</p></div>';title.textContent='Nenhuma posição detetada';return;}
+  title.textContent=positions.length+' posição(ões) detetada(s)';
+  wrap.innerHTML='<table class="import-table"><thead><tr><th>Ticker</th><th>Nome</th><th>Tipo</th><th>Qtd</th><th>Preço médio</th><th>Moeda</th><th></th></tr></thead><tbody>'+positions.map((p,i)=>'<tr id="import-row-'+i+'"><td><input class="input" id="imp-ticker-'+i+'" value="'+(p.ticker||'')+'" style="width:80px" autocomplete="off"/></td><td><input class="input" id="imp-nome-'+i+'" value="'+(p.nome||'')+'" style="width:140px"/></td><td><select class="input" id="imp-tipo-'+i+'" style="width:90px"><option value="Ação" '+(p.tipo==='Ação'||p.tipo==='Acao'?'selected':'')+'>Ação</option><option value="ETF" '+(p.tipo==='ETF'?'selected':'')+'>ETF</option><option value="Cripto" '+(p.tipo==='Cripto'?'selected':'')+'>Cripto</option><option value="Cash" '+(p.tipo==='Cash'?'selected':'')+'>Cash</option></select></td><td><input class="input" id="imp-qty-'+i+'" value="'+(p.qty||'')+'" type="number" step="any" style="width:80px"/></td><td><input class="input" id="imp-pm-'+i+'" value="'+(p.precoMedio||'')+'" type="number" step="any" style="width:90px"/></td><td><select class="input" id="imp-moeda-'+i+'" style="width:80px">'+['EUR','USD','GBP','GBX','JPY','CHF','CAD','AUD','BRL','SEK','NOK','DKK','HKD','SGD','CNY'].map(m=>'<option value="'+m+'" '+(( p.moeda||'EUR')===m?'selected':'')+'>'+m+'</option>').join('')+'</select></td><td><button class="btn-skip" data-skip="'+i+'">Ignorar</button></td></tr>').join('')+'</tbody></table>';
+  document.querySelectorAll('[data-skip]').forEach(btn=>btn.addEventListener('click',function(){
+    const i=btn.dataset.skip,row=document.getElementById('import-row-'+i);
+    if(btn.classList.contains('skipped')){btn.classList.remove('skipped');btn.textContent='Ignorar';row.classList.remove('import-row-skip');}
+    else{btn.classList.add('skipped');btn.textContent='Ignorado';row.classList.add('import-row-skip');}
+  }));
+  positions.forEach((p,i)=>{
+    const input=document.getElementById('imp-ticker-'+i);
+    if(!input) return;
+    let acTimeout=null;
+    input.addEventListener('input',function(){
+      clearTimeout(acTimeout);
+      const q=input.value.trim();
+      if(q.length<2){try{hideImportAC(i);}catch{}return;}
+      acTimeout=setTimeout(async()=>{
+        try{const results=await searchTickerAutocomplete(q);showImportAC(i,results,input);}
+        catch(e){console.warn('Autocomplete error:',e);}
+      },300);
+    });
+    input.addEventListener('blur',()=>setTimeout(()=>{try{hideImportAC(i);}catch{}},200));
+  });
+}
+
+function showImportAC(i,results,inputEl){
+  let dropdown=document.getElementById('imp-ac-'+i);
+  if(!dropdown){dropdown=document.createElement('div');dropdown.id='imp-ac-'+i;dropdown.className='ticker-autocomplete';document.body.appendChild(dropdown);}
+  if(!results||results.length===0){dropdown.style.display='none';return;}
+  const rect=inputEl.getBoundingClientRect();
+  dropdown.style.position='fixed';
+  dropdown.style.top=(rect.bottom+4)+'px';
+  dropdown.style.left=rect.left+'px';
+  dropdown.style.width=rect.width+'px';
+  dropdown.innerHTML=results.map(r=>'<div class="autocomplete-item" data-symbol="'+r.symbol+'" data-name="'+(r.shortname||'')+'"><span class="ac-ticker">'+r.symbol+'</span><span class="ac-name">'+(r.shortname||'')+'</span><span class="ac-type">'+(r.exchDisp||'')+'</span></div>').join('');
+  dropdown.style.display='block';
+  dropdown.querySelectorAll('.autocomplete-item').forEach(item=>{
+    item.addEventListener('mousedown',function(e){
+      e.preventDefault();
+      inputEl.value=item.dataset.symbol;
+      const nomeEl=document.getElementById('imp-nome-'+i);
+      if(nomeEl) nomeEl.value=item.dataset.name;
+      dropdown.style.display='none';
+    });
+  });
+}
+
+function hideImportAC(i){
+  const d=document.getElementById('imp-ac-'+i);
+  if(d) d.style.display='none';
+}
+
+document.getElementById('btn-import-guardar').addEventListener('click', async function() {
+  if(!importPositions||importPositions.length===0) return;
+  const btn=document.getElementById('btn-import-guardar');
+  btn.textContent='A guardar...';
+  let saved=0,skipped=0;
+  for(let i=0;i<importPositions.length;i++){
+    const skipBtn=document.querySelector('[data-skip="'+i+'"]');
+    if(skipBtn?.classList.contains('skipped')){skipped++;continue;}
+    const ticker=document.getElementById('imp-ticker-'+i)?.value.trim().toUpperCase();
+    const nome=document.getElementById('imp-nome-'+i)?.value.trim();
+    const tipo=document.getElementById('imp-tipo-'+i)?.value;
+    const qty=parseFloat(document.getElementById('imp-qty-'+i)?.value);
+    const pm=parseFloat(document.getElementById('imp-pm-'+i)?.value);
+    const moeda=document.getElementById('imp-moeda-'+i)?.value||'EUR';
+    if(!ticker||!qty) continue;
+    const fxRate=moeda==='GBX'?(await getEurRate('GBP'))/100:await getEurRate(moeda);
+    const precoMedioEur=pm?Math.round(pm*fxRate*10000)/10000:0;
+    const precoAtual=await fetchPrice(ticker,nome)||precoMedioEur;
+    currentP().ativos.push({tipo:tipo||'Ação',ticker,nome:nome||ticker,qty,moedaCompra:moeda,precoMedioOriginal:pm||0,precoMedio:precoMedioEur,precoAtual});
+    saved++;
+  }
+  saveAtivos();btn.textContent='✓ Guardar todas';
+  toast('✓ '+saved+' ativo(s) adicionado(s)'+(skipped>0?', '+skipped+' ignorado(s)':''));
+  showPage('dashboard');
+});
+
+// ── Toast ─────────────────────────────────────────────────────────
+function toast(msg) {
+  let t=document.querySelector('.toast');
+  if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t);}
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ── Botões sidebar ────────────────────────────────────────────────
+document.getElementById('btn-refresh-all').addEventListener('click', atualizarTodosPrecos);
+document.getElementById('btn-clear-key').addEventListener('click',function(){
+  if(getApiKey()){if(confirm('Apagar a chave API guardada?')){localStorage.removeItem(API_KEY_STORAGE);toast('✓ Chave apagada');}}
+  else{toast('Não há chave guardada');}
+});
+
+// ── Sort ──────────────────────────────────────────────────────────
+document.addEventListener('click', function(e) {
+  const sortMenu = document.getElementById('sort-menu');
+  const btnSort = document.getElementById('btn-sort');
+  if (!sortMenu) return;
+  if (e.target.closest('#btn-sort')) {
+    e.stopPropagation();
+    sortMenu.style.display = sortMenu.style.display==='none'?'block':'none';
+    return;
+  }
+  if (e.target.closest('.sort-option')) {
+    const opt = e.target.closest('.sort-option');
+    currentSort = opt.dataset.sort;
+    document.querySelectorAll('.sort-option').forEach(o=>o.classList.remove('active'));
+    opt.classList.add('active');
+    const labels = {'valor':'Valor','gl-eur':'G/P €','gl-pct':'G/P %','ticker':'A-Z'};
+    btnSort.textContent = '↕ '+(labels[currentSort]||'Ordenar');
+    sortMenu.style.display = 'none';
+    renderAtivos();
+    return;
+  }
+  sortMenu.style.display = 'none';
+});
+
+// ── Init ──────────────────────────────────────────────────────────
+toggleCashFields();
+renderSidebar();
+prefetchAllRates().then(()=>renderDashboard());
