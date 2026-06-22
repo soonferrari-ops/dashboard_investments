@@ -1086,8 +1086,8 @@ function onToggleChange(checked) {
   currentP().agrupar = checked;
   saveAll();
   syncToggles();
-  renderAtivos();
   renderDashTable();
+  renderAtivos();
 }
 
 const toggleAgrupar = document.getElementById('toggle-agrupar');

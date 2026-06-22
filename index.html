@@ -115,11 +115,6 @@
           <h1 class="page-title" id="dash-title">Dashboard</h1>
           <p class="page-sub" id="dash-sub">—</p>
         </div>
-        <label class="toggle-switch" title="Agrupar posições com o mesmo ticker">
-          <input type="checkbox" id="toggle-agrupar-dash" />
-          <span class="toggle-track"><span class="toggle-thumb"></span></span>
-          <span class="toggle-label">Agrupar</span>
-        </label>
       </header>
       <div class="metrics-grid">
         <div class="metric-card accent">
@@ -175,7 +170,14 @@
       <div class="card">
         <div class="card-header">
           <span class="card-title">Posições</span>
-          <a href="#" class="card-link" data-page="ativos">Ver todas →</a>
+          <div style="display:flex;align-items:center;gap:16px">
+            <label class="toggle-switch" title="Agrupar posições com o mesmo ticker">
+              <input type="checkbox" id="toggle-agrupar-dash" />
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              <span class="toggle-label">Agrupar</span>
+            </label>
+            <a href="#" class="card-link" data-page="ativos">Ver todas →</a>
+          </div>
         </div>
         <div class="empty-state" id="dash-empty"><p>Ainda não tens ativos.<br><a href="#" class="link" data-page="adicionar">Adiciona o primeiro →</a></p></div>
         <table class="table" id="dash-table" style="display:none">
