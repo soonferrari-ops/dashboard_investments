@@ -302,7 +302,7 @@ function showPage(id) {
   if (page) page.classList.add('active');
   const nav = document.querySelector(`.nav-item[data-page="${id}"]`);
   if (nav) nav.classList.add('active');
-  if (id==='global')    renderGlobal();
+  if (id==='global')    setTimeout(renderGlobal, 10);
   if (id==='dashboard') renderDashboard();
   if (id==='ativos')    renderAtivos();
   if (id==='analise')   { const el=document.getElementById('analise-sub'); if(el) el.textContent=currentP().nome; }
