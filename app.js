@@ -787,8 +787,19 @@ document.getElementById('btn-importar-analisar').addEventListener('click', async
     const data=await response.json();
     const text=data.content?.[0]?.text||'[]';
     let positions=[];
-    try{const clean=text.replace(/```json|```/g,'').trim();positions=JSON.parse(clean);}
-    catch{toast('Não foi possível ler as posições. Tenta com uma imagem mais clara.');}
+    try{
+      // Remove markdown code blocks and any leading/trailing whitespace
+      let clean=text.replace(/```json/gi,'').replace(/```/g,'').trim();
+      // Find the JSON array
+      const start=clean.indexOf('[');
+      const end=clean.lastIndexOf(']');
+      if(start!==-1&&end!==-1) clean=clean.slice(start,end+1);
+      positions=JSON.parse(clean);
+      if(!Array.isArray(positions)) positions=[];
+    } catch(err){
+      console.error('Parse error:',err,'Text:',text);
+      toast('Não foi possível ler as posições. Tenta com uma imagem mais clara.');
+    }
     importPositions=positions;
     document.getElementById('import-loading').style.display='none';
     document.getElementById('import-result').style.display='block';
