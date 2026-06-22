@@ -369,7 +369,7 @@ document.getElementById('btn-guardar-portfolio').addEventListener('click',functi
   const nome=document.getElementById('portfolio-nome-input').value.trim();
   if(!nome){toast('Dá um nome ao portfolio');return;}
   if(editingPortfolioId){const p=portfolios.find(x=>x.id===editingPortfolioId);if(p)p.nome=nome;}
-  else{const novo={id:uid(),nome,ativos:[],history:[]};portfolios.push(novo);currentPortfolioId=novo.id;}
+  else{const novo={id:uid(),nome,ativos:[],history:[],agrupar:true};portfolios.push(novo);currentPortfolioId=novo.id;}
   saveAll();closePortfolioModal();renderSidebar();showPage('dashboard');
   toast('✓ Portfolio '+(editingPortfolioId?'atualizado':'criado'));
 });
@@ -1070,11 +1070,14 @@ document.getElementById('btn-clear-key').addEventListener('click',function(){
 });
 
 // ── Toggle agrupar ────────────────────────────────────────────────
-document.getElementById('toggle-agrupar').addEventListener('change', function() {
-  currentP().agrupar = this.checked;
-  saveAll();
-  renderAtivos();
-});
+const toggleAgrupar = document.getElementById('toggle-agrupar');
+if(toggleAgrupar) {
+  toggleAgrupar.addEventListener('change', function() {
+    currentP().agrupar = this.checked;
+    saveAll();
+    renderAtivos();
+  });
+}
 
 // ── Sort ──────────────────────────────────────────────────────────
 document.addEventListener('click', function(e) {
