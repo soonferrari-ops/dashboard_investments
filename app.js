@@ -745,21 +745,19 @@ if(uploadZone) {
 if(imgUpload) imgUpload.addEventListener('change',function(e){if(e.target.files[0])handleImageFile(e.target.files[0]);});
 
 function handleImageFile(file) {
-  // Use file.type directly - most reliable way to get media type
   importMediaType = file.type || 'image/jpeg';
-  // Anthropic only accepts these types
   if (!['image/jpeg','image/png','image/gif','image/webp'].includes(importMediaType)) {
     importMediaType = 'image/jpeg';
   }
-  const reader=new FileReader();
-  reader.onload=function(e){
-    const dataUrl=e.target.result;
-    importImageBase64=dataUrl.split(',')[1];
-    document.getElementById('img-preview').src=e.target.result;
-    document.getElementById('img-preview-wrap').style.display='block';
-    document.getElementById('upload-zone').style.display='none';
-    document.getElementById('import-actions').style.display='block';
-    document.getElementById('import-result').style.display='none';
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const dataUrl = e.target.result;
+    importImageBase64 = dataUrl.split(',')[1];
+    document.getElementById('img-preview').src = dataUrl;
+    document.getElementById('img-preview-wrap').style.display = 'block';
+    document.getElementById('upload-zone').style.display = 'none';
+    document.getElementById('import-actions').style.display = 'block';
+    document.getElementById('import-result').style.display = 'none';
   };
   reader.readAsDataURL(file);
 }
@@ -776,6 +774,10 @@ document.getElementById('btn-nova-imagem').addEventListener('click',function(){
 document.getElementById('btn-importar-analisar').addEventListener('click', async function() {
   if(!importImageBase64){toast('Faz upload de uma imagem primeiro');return;}
   if(!getApiKey()&&!askApiKey()) return;
+  // Validate base64 - must be substantial
+  if(importImageBase64.length < 1000){toast('Imagem inválida ou muito pequena');return;}
+  // Log for debugging
+  console.log('Image type:', importMediaType, 'Base64 length:', importImageBase64.length);
   document.getElementById('import-loading').style.display='flex';
   document.getElementById('import-actions').style.display='none';
   document.getElementById('import-result').style.display='none';
