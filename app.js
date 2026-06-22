@@ -519,6 +519,7 @@ function renderAtivos() {
   });
   document.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',()=>{
     const indices = btn.dataset.edit.split(',').map(Number);
+    console.log('Edit clicked, indices:', indices, 'data-edit:', btn.dataset.edit);
     if(indices.length > 1) openModalGrouped(indices);
     else openModal(indices[0]);
   }));
