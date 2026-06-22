@@ -28,7 +28,7 @@ if (!portfolios) {
 let currentPortfolioId = portfolios[0].id;
 let selectedType  = 'Ação';
 let selectedBroker = 'Trading 212';
-let evoChart = null, pieChart = null, currentPeriod = '1m';
+let evoChart = null, pieChart = null, globalPieChart = null, currentPeriod = '1m';
 let importImageBase64 = null, importPositions = [], importMediaType = 'image/jpeg';
 let currentSort = 'valor';
 
@@ -406,6 +406,24 @@ function renderGlobal() {
   document.querySelectorAll('[data-goto]').forEach(el=>{
     el.addEventListener('click',()=>{currentPortfolioId=el.dataset.goto;renderSidebar();showPage('dashboard');});
   });
+  // Pie chart por tipo de ativo (global)
+  const canvas=document.getElementById('globalPieChart');
+  const empty=document.getElementById('global-pie-empty');
+  const legend=document.getElementById('global-pie-legend');
+  const donutLabel=document.getElementById('global-donut-label');
+  if(!canvas) return;
+  if(allAtivos.length===0){
+    canvas.style.display='none';empty.classList.add('visible');legend.innerHTML='';donutLabel.textContent='—';
+    if(globalPieChart){globalPieChart.destroy();globalPieChart=null;}return;
+  }
+  canvas.style.display='block';empty.classList.remove('visible');
+  const tipos=['Ação','ETF','Cripto','Cash'];
+  const vals=tipos.map(t=>allAtivos.filter(a=>a.tipo===t).reduce((s,a)=>s+valorAtivo(a),0));
+  const labels=tipos.filter((_,i)=>vals[i]>0),data=vals.filter(v=>v>0),colors=labels.map(t=>COLORS[t]);
+  donutLabel.textContent=fmt(total);
+  legend.innerHTML=labels.map((l,i)=>`<div class="legend-item"><span class="legend-dot" style="background:${colors[i]}"></span>${l} ${total>0?((data[i]/total)*100).toFixed(1):0}%</div>`).join('');
+  if(globalPieChart) globalPieChart.destroy();
+  globalPieChart=new Chart(canvas,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmt(ctx.raw)} (${((ctx.raw/total)*100).toFixed(1)}%)`},backgroundColor:'#1a1e28',borderColor:'#252935',borderWidth:1,bodyColor:'#e8eaf0',padding:10}}}});
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────
@@ -471,9 +489,20 @@ function renderPieChart() {
   const ativos=mergeAtivos(getAtivos()),canvas=document.getElementById('pieChart'),empty=document.getElementById('pie-empty'),legend=document.getElementById('pie-legend'),donutLabel=document.getElementById('donut-label');
   if(ativos.length===0){canvas.style.display='none';empty.classList.add('visible');legend.innerHTML='';donutLabel.textContent='—';if(pieChart){pieChart.destroy();pieChart=null;}return;}
   canvas.style.display='block';empty.classList.remove('visible');
-  const tipos=['Ação','ETF','Cripto','Cash'],total=calcTotal();
-  const vals=tipos.map(t=>ativos.filter(a=>a.tipo===t).reduce((s,a)=>s+valorAtivo(a),0));
-  const labels=tipos.filter((_,i)=>vals[i]>0),data=vals.filter(v=>v>0),colors=labels.map(t=>COLORS[t]);
+  const total=calcTotal();
+  // Sort by value descending, group small positions into "Outros"
+  const sorted=[...ativos].sort((a,b)=>valorAtivo(b)-valorAtivo(a));
+  const TOP=8;
+  const top=sorted.slice(0,TOP);
+  const rest=sorted.slice(TOP);
+  const tickerColors=['#5b8dee','#9b7de8','#4caf82','#e6a140','#e05c5c','#5bc4c4','#f06292','#aed581'];
+  let labels=top.map(a=>a.ticker);
+  let data=top.map(a=>valorAtivo(a));
+  let colors=top.map((_,i)=>tickerColors[i%tickerColors.length]);
+  if(rest.length>0){
+    const restVal=rest.reduce((s,a)=>s+valorAtivo(a),0);
+    labels.push('Outros');data.push(restVal);colors.push('#555d70');
+  }
   donutLabel.textContent=fmt(total);
   legend.innerHTML=labels.map((l,i)=>`<div class="legend-item"><span class="legend-dot" style="background:${colors[i]}"></span>${l} ${total>0?((data[i]/total)*100).toFixed(1):0}%</div>`).join('');
   if(pieChart) pieChart.destroy();
@@ -797,6 +826,15 @@ function handleApagarModal() {
 }
 
 attachModalListeners();
+
+// ── Reset gráfico evolução ────────────────────────────────────────
+document.getElementById('btn-reset-evo').addEventListener('click', function() {
+  if(!confirm('Apagar o histórico do gráfico de evolução deste portfolio?')) return;
+  currentP().history = [];
+  saveAll();
+  renderEvoChart();
+  toast('✓ Histórico apagado');
+});
 
 // ── Análise IA ────────────────────────────────────────────────────
 document.getElementById('btn-analisar').addEventListener('click', async function() {

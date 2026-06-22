@@ -832,3 +832,20 @@ select.input option { background: var(--bg2); color: var(--text); }
 .ac-ticker { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 13px; color: #e8eaf0 !important; min-width: 70px; }
 .ac-name { font-size: 12px; color: #8b90a0 !important; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ac-type { font-size: 11px; color: #555d70 !important; flex-shrink: 0; }
+
+/* ── Reset evolução button ── */
+.btn-reset-evo {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-reset-evo:hover {
+  border-color: var(--neg);
+  color: var(--neg);
+}

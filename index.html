@@ -91,9 +91,20 @@
           <div class="metric-trend" id="g-cash-pct">—</div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-header"><span class="card-title">Portfolios</span></div>
-        <div id="global-portfolios-list"></div>
+      <div class="charts-row">
+        <div class="card chart-card">
+          <div class="card-header"><span class="card-title">Alocação por tipo</span></div>
+          <div class="chart-wrap donut-wrap">
+            <canvas id="globalPieChart"></canvas>
+            <div class="donut-center" id="global-donut-label">—</div>
+            <div class="chart-empty" id="global-pie-empty">Sem dados</div>
+          </div>
+          <div class="legend" id="global-pie-legend"></div>
+        </div>
+        <div class="card chart-card">
+          <div class="card-header"><span class="card-title">Portfolios</span></div>
+          <div id="global-portfolios-list"></div>
+        </div>
       </div>
     </div>
 
@@ -131,11 +142,14 @@
         <div class="card chart-card">
           <div class="card-header">
             <span class="card-title">Evolução</span>
-            <div class="chart-tabs">
-              <button class="chart-tab active" data-period="1m">1M</button>
-              <button class="chart-tab" data-period="3m">3M</button>
-              <button class="chart-tab" data-period="6m">6M</button>
-              <button class="chart-tab" data-period="1a">1A</button>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="chart-tabs">
+                <button class="chart-tab active" data-period="1m">1M</button>
+                <button class="chart-tab" data-period="3m">3M</button>
+                <button class="chart-tab" data-period="6m">6M</button>
+                <button class="chart-tab" data-period="1a">1A</button>
+              </div>
+              <button class="btn-reset-evo" id="btn-reset-evo" title="Apagar histórico do gráfico">↺ Reset</button>
             </div>
           </div>
           <div class="chart-wrap">
