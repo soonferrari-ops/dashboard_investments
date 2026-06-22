@@ -442,11 +442,14 @@ function renderDashboard() {
   document.getElementById('m-cash').textContent=fmt(cash);
   document.getElementById('m-cash-pct').textContent=total>0?cashPct.toFixed(1)+'% do total':'—';
   document.getElementById('last-update').textContent='Atualizado: '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  syncToggles();
   renderEvoChart(); renderPieChart(); renderDashTable();
 }
 
 function renderDashTable() {
-  const ativos=mergeAtivos(getAtivos()),tbody=document.getElementById('dash-tbody'),table=document.getElementById('dash-table'),empty=document.getElementById('dash-empty');
+  const rawAtivos=getAtivos();
+  const ativos=getAgrupar()?mergeAtivos(rawAtivos):rawAtivos;
+  const tbody=document.getElementById('dash-tbody'),table=document.getElementById('dash-table'),empty=document.getElementById('dash-empty');
   tbody.innerHTML='';
   if(ativos.length===0){table.style.display='none';empty.style.display='block';return;}
   table.style.display='table';empty.style.display='none';
@@ -535,6 +538,7 @@ function renderAtivos() {
   const hasDupes=rawAtivos.length>merged.length;
   const toggle=document.getElementById('toggle-agrupar');
   if(toggle) toggle.checked=agrupar;
+  syncToggles();
   document.getElementById('ativos-title').textContent=p.nome;
   document.getElementById('ativos-sub').textContent=rawAtivos.length+' posições'+(hasDupes&&!agrupar?' ('+(rawAtivos.length-merged.length)+' duplicado(s))':'');
   const tbody=document.getElementById('ativos-tbody'),table=document.getElementById('ativos-table'),empty=document.getElementById('ativos-empty');
@@ -1070,14 +1074,27 @@ document.getElementById('btn-clear-key').addEventListener('click',function(){
 });
 
 // ── Toggle agrupar ────────────────────────────────────────────────
-const toggleAgrupar = document.getElementById('toggle-agrupar');
-if(toggleAgrupar) {
-  toggleAgrupar.addEventListener('change', function() {
-    currentP().agrupar = this.checked;
-    saveAll();
-    renderAtivos();
-  });
+function syncToggles() {
+  const val = getAgrupar();
+  const t1 = document.getElementById('toggle-agrupar');
+  const t2 = document.getElementById('toggle-agrupar-dash');
+  if(t1) t1.checked = val;
+  if(t2) t2.checked = val;
 }
+
+function onToggleChange(checked) {
+  currentP().agrupar = checked;
+  saveAll();
+  syncToggles();
+  renderAtivos();
+  renderDashTable();
+}
+
+const toggleAgrupar = document.getElementById('toggle-agrupar');
+if(toggleAgrupar) toggleAgrupar.addEventListener('change', function() { onToggleChange(this.checked); });
+
+const toggleAgruparDash = document.getElementById('toggle-agrupar-dash');
+if(toggleAgruparDash) toggleAgruparDash.addEventListener('change', function() { onToggleChange(this.checked); });
 
 // ── Sort ──────────────────────────────────────────────────────────
 document.addEventListener('click', function(e) {
