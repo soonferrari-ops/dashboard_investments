@@ -510,12 +510,18 @@ function renderAtivos() {
   sortAtivos(ativos).forEach(a=>{
     const val=valorAtivo(a),custo=custoAtivo(a),gl=val-custo,glPct=custo>0?(gl/custo)*100:0,peso=total>0?(val/total)*100:0,cor=COLORS[a.tipo]||'#888';
     const pmDisplay=a.moedaCompra&&a.moedaCompra!=='EUR'?`<span style="font-size:11px;color:var(--text2)">${a.moedaCompra} ${Number(a.precoMedioOriginal||a.precoMedio).toFixed(2)}</span><br>${fmt(a.precoMedio)}`:fmt(a.precoMedio);
+    const isGrouped = a._indices && a._indices.length > 1;
     const editIdx = a._indices ? a._indices[0] : rawAtivos.indexOf(a);
+    const editIndices = a._indices ? a._indices.join(',') : String(editIdx);
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td><div class="ticker-name">${a.ticker}</div><div class="ticker-full">${a.nome}${a._indices&&a._indices.length>1?` <span style="font-size:10px;color:var(--text3)">(${a._indices.length}×)</span>`:''}</div></td><td><span class="tag tag-${a.tipo}">${a.tipo}</span></td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':Number(a.qty).toLocaleString('en-GB')}</td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':pmDisplay}</td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':fmt(parseFloat(a.precoAtual)||0)}</td><td class="right" style="font-family:var(--mono)">${fmt(val)}</td><td class="right"><div class="${gl>=0?'pos':'neg'}" style="font-family:var(--mono)">${fmt(gl)}</div><div class="${gl>=0?'pos':'neg'}" style="font-size:11px">${fmtPct(glPct)}</div></td><td class="right"><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><div class="bar-wrap"><div class="bar" style="width:${Math.min(peso,100)}%;background:${cor}"></div></div><span style="font-size:12px;font-family:var(--mono);color:var(--text2)">${peso.toFixed(1)}%</span></div></td><td><button class="btn-icon" data-edit="${editIdx}">✎</button></td>`;
+    tr.innerHTML=`<td><div class="ticker-name">${a.ticker}</div><div class="ticker-full">${a.nome}${isGrouped?` <span style="font-size:10px;color:var(--text3)">(${a._indices.length}×)</span>`:''}</div></td><td><span class="tag tag-${a.tipo}">${a.tipo}</span></td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':Number(a.qty).toLocaleString('en-GB')}</td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':pmDisplay}</td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':fmt(parseFloat(a.precoAtual)||0)}</td><td class="right" style="font-family:var(--mono)">${fmt(val)}</td><td class="right"><div class="${gl>=0?'pos':'neg'}" style="font-family:var(--mono)">${fmt(gl)}</div><div class="${gl>=0?'pos':'neg'}" style="font-size:11px">${fmtPct(glPct)}</div></td><td class="right"><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><div class="bar-wrap"><div class="bar" style="width:${Math.min(peso,100)}%;background:${cor}"></div></div><span style="font-size:12px;font-family:var(--mono);color:var(--text2)">${peso.toFixed(1)}%</span></div></td><td><button class="btn-icon" data-edit="${editIndices}">✎</button></td>`;
     tbody.appendChild(tr);
   });
-  document.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',()=>openModal(parseInt(btn.dataset.edit))));
+  document.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',()=>{
+    const indices = btn.dataset.edit.split(',').map(Number);
+    if(indices.length > 1) openModalGrouped(indices);
+    else openModal(indices[0]);
+  }));
 }
 
 // ── Adicionar ativo ───────────────────────────────────────────────
@@ -649,6 +655,85 @@ function resetForm() {
 }
 
 // ── Modal editar ativo ────────────────────────────────────────────
+function openModalGrouped(indices) {
+  const ativos = getAtivos();
+  const modal = document.getElementById('modal-backdrop');
+  const body = document.getElementById('modal-backdrop').querySelector('.modal-body');
+  
+  // Show all entries for this grouped ticker
+  document.getElementById('modal-backdrop').querySelector('.modal-title').textContent = 
+    ativos[indices[0]]?.ticker + ' — ' + indices.length + ' entradas';
+  
+  body.innerHTML = indices.map((idx, i) => {
+    const a = ativos[idx];
+    if (!a) return '';
+    return `
+      <div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:12px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em">Entrada ${i+1}</div>
+        <input type="hidden" class="grouped-idx" value="${idx}">
+        <div class="form-row">
+          <div class="form-group"><label class="label">Quantidade</label><input class="input grouped-qty" type="number" step="any" value="${a.qty}"/></div>
+          <div class="form-group">
+            <label class="label">Moeda</label>
+            <select class="input grouped-moeda">
+              ${['EUR','USD','GBP','GBX','JPY','CHF','CAD','AUD','BRL','SEK','NOK','DKK','HKD','SGD','CNY'].map(m=>`<option value="${m}" ${(a.moedaCompra||'EUR')===m?'selected':''}>${m}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label class="label">Preço médio</label><input class="input grouped-pm" type="number" step="any" value="${a.precoMedioOriginal||a.precoMedio}"/></div>
+          <div class="form-group"><label class="label">Preço atual (€)</label><input class="input grouped-pa" type="number" step="any" value="${a.precoAtual}"/></div>
+        </div>
+        <div style="text-align:right;margin-top:8px">
+          <button class="btn btn-ghost" style="font-size:11px;color:var(--neg)" data-delete-idx="${idx}">Apagar esta entrada</button>
+        </div>
+      </div>`;
+  }).join('');
+  
+  // Replace footer buttons
+  const footer = document.getElementById('modal-backdrop').querySelector('.modal-footer');
+  footer.innerHTML = `
+    <span style="font-size:12px;color:var(--text2)">${indices.length} entradas agrupadas</span>
+    <button class="btn btn-primary" id="btn-grouped-guardar">Guardar todas</button>`;
+  
+  modal.style.display = 'flex';
+  
+  // Delete individual entry
+  body.querySelectorAll('[data-delete-idx]').forEach(btn => {
+    btn.addEventListener('click', function() {
+      if (!confirm('Apagar esta entrada?')) return;
+      const delIdx = parseInt(btn.dataset.deleteIdx);
+      getAtivos().splice(delIdx, 1);
+      saveAtivos();
+      modal.style.display = 'none';
+      renderAtivos();
+      toast('Entrada apagada');
+    });
+  });
+  
+  // Save all
+  document.getElementById('btn-grouped-guardar').addEventListener('click', async function() {
+    const entries = body.querySelectorAll('.grouped-idx');
+    for (const entry of entries) {
+      const idx = parseInt(entry.value);
+      const a = getAtivos()[idx];
+      if (!a) continue;
+      const moeda = entry.closest('div[style]').querySelector('.grouped-moeda').value;
+      const pm = parseFloat(entry.closest('div[style]').querySelector('.grouped-pm').value)||0;
+      const pa = parseFloat(entry.closest('div[style]').querySelector('.grouped-pa').value)||0;
+      const qty = parseFloat(entry.closest('div[style]').querySelector('.grouped-qty').value)||0;
+      const fxRate = moeda==='GBX'?(await getEurRate('GBP'))/100:await getEurRate(moeda);
+      a.qty = qty;
+      a.moedaCompra = moeda;
+      a.precoMedioOriginal = pm;
+      a.precoMedio = Math.round(pm*fxRate*10000)/10000;
+      a.precoAtual = pa;
+    }
+    saveAtivos();
+    modal.style.display = 'none';
+    renderAtivos();
+    toast('✓ Entradas atualizadas');
+  });
+}
+
 function openModal(idx) {
   const a=getAtivos()[idx];
   document.getElementById('edit-idx').value=idx;
@@ -671,12 +756,27 @@ function openModal(idx) {
   document.getElementById('modal-backdrop').style.display='flex';
 }
 
-document.getElementById('modal-close').addEventListener('click',()=>document.getElementById('modal-backdrop').style.display='none');
+document.getElementById('modal-close').addEventListener('click', function() {
+  const modal = document.getElementById('modal-backdrop');
+  modal.style.display='none';
+  // Restore original footer
+  const footer = modal.querySelector('.modal-footer');
+  footer.innerHTML = '<button class="btn btn-ghost" id="btn-apagar">Apagar</button><button class="btn btn-primary" id="btn-editar-guardar">Guardar</button>';
+  // Re-attach listeners
+  attachModalListeners();
+});
 document.getElementById('modal-backdrop').addEventListener('click',function(e){
   if(e.target===document.getElementById('modal-backdrop')) document.getElementById('modal-backdrop').style.display='none';
 });
 
-document.getElementById('btn-editar-guardar').addEventListener('click', async function() {
+function attachModalListeners() {
+  const btnApagar = document.getElementById('btn-apagar');
+  const btnGuardar = document.getElementById('btn-editar-guardar');
+  if (btnApagar) btnApagar.addEventListener('click', handleApagarModal);
+  if (btnGuardar) btnGuardar.addEventListener('click', handleGuardarModal);
+}
+
+async function handleGuardarModal() {
   const idx=parseInt(document.getElementById('edit-idx').value),a=getAtivos()[idx];
   a.ticker=document.getElementById('edit-ticker').value.trim().toUpperCase();
   a.nome=document.getElementById('edit-nome').value.trim();
@@ -695,13 +795,15 @@ document.getElementById('btn-editar-guardar').addEventListener('click', async fu
   saveAtivos();document.getElementById('modal-backdrop').style.display='none';renderAtivos();toast('✓ Ativo atualizado');
 });
 
-document.getElementById('btn-apagar').addEventListener('click',function(){
+function handleApagarModal() {
   const idx=parseInt(document.getElementById('edit-idx').value);
-  if(confirm(`Apagar "${getAtivos()[idx].ticker}"?`)){
+  if(confirm('Apagar "'+getAtivos()[idx]?.ticker+'"?')){
     currentP().ativos.splice(idx,1);saveAtivos();
     document.getElementById('modal-backdrop').style.display='none';renderAtivos();toast('Ativo removido');
   }
-});
+}
+
+attachModalListeners();
 
 // ── Análise IA ────────────────────────────────────────────────────
 document.getElementById('btn-analisar').addEventListener('click', async function() {
