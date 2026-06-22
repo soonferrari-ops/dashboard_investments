@@ -155,27 +155,39 @@ async function searchTicker(name) {
 let autocompleteTimeout = null;
 
 async function searchTickerAutocomplete(query) {
-  // Try each proxy directly with raw fetch (search API has different response format)
-  const yahooUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=8&newsCount=0&listsCount=0`;
-  const proxyUrls = [
-    `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`,
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`,
-    `https://thingproxy.freeboard.io/fetch/${yahooUrl}`,
+  // Try multiple Yahoo search endpoints through different proxies
+  const endpoints = [
+    `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=8&newsCount=0&listsCount=0`,
+    `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=8&newsCount=0&listsCount=0`,
+    `https://query1.finance.yahoo.com/v6/finance/autocomplete?query=${encodeURIComponent(query)}&lang=en`,
   ];
-  for (const url of proxyUrls) {
-    try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-      if (!res.ok) continue;
-      const text = await res.text();
-      // allorigins wraps in {contents:...}
-      let data;
-      try { data = JSON.parse(text); } catch { continue; }
-      if (data?.contents) { try { data = JSON.parse(data.contents); } catch { continue; } }
-      const quotes = data?.quotes || [];
-      const filtered = quotes.filter(q => q.symbol && (q.quoteType==='EQUITY'||q.quoteType==='ETF'||q.quoteType==='CRYPTOCURRENCY'));
-      if (filtered.length > 0) return filtered;
-    } catch {}
+  const proxies = [
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+    u => `https://thingproxy.freeboard.io/fetch/${u}`,
+  ];
+  for (const endpoint of endpoints) {
+    for (const proxy of proxies) {
+      try {
+        const res = await fetch(proxy(endpoint), { signal: AbortSignal.timeout(4000) });
+        if (!res.ok) continue;
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch { continue; }
+        // Handle allorigins wrapper
+        if (data?.contents) { try { data = JSON.parse(data.contents); } catch { continue; } }
+        // Handle v1/finance/search format
+        const quotes = data?.quotes || data?.ResultSet?.Result || [];
+        const filtered = quotes.filter(q => (q.symbol||q.Symbol) && (q.quoteType==='EQUITY'||q.quoteType==='ETF'||q.quoteType==='CRYPTOCURRENCY'||q.typeDisp==='Equity'));
+        if (filtered.length > 0) return filtered.map(q => ({
+          symbol: q.symbol||q.Symbol,
+          shortname: q.shortname||q.Name||q.longname||'',
+          exchDisp: q.exchDisp||q.Exchange||q.exchange||'',
+          quoteType: q.quoteType||'EQUITY'
+        }));
+      } catch {}
+    }
   }
   return [];
 }
@@ -186,8 +198,15 @@ function showAutocomplete(results) {
     dropdown = document.createElement('div');
     dropdown.id = 'ticker-autocomplete';
     dropdown.className = 'ticker-autocomplete';
-    document.getElementById('f-ticker').parentNode.appendChild(dropdown);
+    document.body.appendChild(dropdown);
   }
+  // Position relative to the ticker input
+  const inputEl = document.getElementById('f-ticker');
+  const rect = inputEl.getBoundingClientRect();
+  dropdown.style.position = 'fixed';
+  dropdown.style.top = (rect.bottom + 4) + 'px';
+  dropdown.style.left = rect.left + 'px';
+  dropdown.style.width = rect.width + 'px';
   if (!results || results.length === 0) { dropdown.style.display = 'none'; return; }
   dropdown.innerHTML = results.map(r => `
     <div class="autocomplete-item" data-symbol="${r.symbol}" data-name="${r.shortname||r.longname||''}">
