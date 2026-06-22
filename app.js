@@ -786,7 +786,7 @@ async function handleGuardarModal() {
     a.precoAtual=parseFloat(document.getElementById('edit-preco-atual').value)||0;
   }
   saveAtivos();document.getElementById('modal-backdrop').style.display='none';renderAtivos();toast('✓ Ativo atualizado');
-});
+}
 
 function handleApagarModal() {
   const idx=parseInt(document.getElementById('edit-idx').value);
