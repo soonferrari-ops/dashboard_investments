@@ -155,11 +155,29 @@ async function searchTicker(name) {
 let autocompleteTimeout = null;
 
 async function searchTickerAutocomplete(query) {
-  try {
-    const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=8&newsCount=0&listsCount=0&enableFuzzyQuery=true`;
-    const data = await yahooFetch(url);
-    return (data?.quotes || []).filter(q => q.symbol && (q.quoteType==='EQUITY'||q.quoteType==='ETF'||q.quoteType==='CRYPTOCURRENCY'));
-  } catch { return []; }
+  // Try each proxy directly with raw fetch (search API has different response format)
+  const yahooUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=8&newsCount=0&listsCount=0`;
+  const proxyUrls = [
+    `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`,
+    `https://thingproxy.freeboard.io/fetch/${yahooUrl}`,
+  ];
+  for (const url of proxyUrls) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+      if (!res.ok) continue;
+      const text = await res.text();
+      // allorigins wraps in {contents:...}
+      let data;
+      try { data = JSON.parse(text); } catch { continue; }
+      if (data?.contents) { try { data = JSON.parse(data.contents); } catch { continue; } }
+      const quotes = data?.quotes || [];
+      const filtered = quotes.filter(q => q.symbol && (q.quoteType==='EQUITY'||q.quoteType==='ETF'||q.quoteType==='CRYPTOCURRENCY'));
+      if (filtered.length > 0) return filtered;
+    } catch {}
+  }
+  return [];
 }
 
 function showAutocomplete(results) {
