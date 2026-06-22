@@ -151,6 +151,43 @@ async function searchTicker(name) {
   return null;
 }
 
+// ── Autocomplete ticker ──────────────────────────────────────────
+let autocompleteTimeout = null;
+
+async function searchTickerAutocomplete(query) {
+  try {
+    const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&quotesCount=8&newsCount=0&listsCount=0&enableFuzzyQuery=true`;
+    const data = await yahooFetch(url);
+    return (data?.quotes || []).filter(q => q.symbol && (q.quoteType==='EQUITY'||q.quoteType==='ETF'||q.quoteType==='CRYPTOCURRENCY'));
+  } catch { return []; }
+}
+
+function showAutocomplete(results) {
+  let dropdown = document.getElementById('ticker-autocomplete');
+  if (!dropdown) {
+    dropdown = document.createElement('div');
+    dropdown.id = 'ticker-autocomplete';
+    dropdown.className = 'ticker-autocomplete';
+    document.getElementById('f-ticker').parentNode.appendChild(dropdown);
+  }
+  if (!results || results.length === 0) { dropdown.style.display = 'none'; return; }
+  dropdown.innerHTML = results.map(r => `
+    <div class="autocomplete-item" data-symbol="${r.symbol}" data-name="${r.shortname||r.longname||''}">
+      <span class="ac-ticker">${r.symbol}</span>
+      <span class="ac-name">${r.shortname||r.longname||''}</span>
+      <span class="ac-type">${r.exchDisp||r.exchange||''}</span>
+    </div>`).join('');
+  dropdown.style.display = 'block';
+  dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
+    item.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+      document.getElementById('f-ticker').value = item.dataset.symbol;
+      document.getElementById('f-nome').value = item.dataset.name;
+      dropdown.style.display = 'none';
+    });
+  });
+}
+
 async function fetchPriceRaw(ticker) {
   const data = await yahooFetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`);
   if (!data) return null;
@@ -469,6 +506,29 @@ if (fMoeda) {
   });
 }
 
+// Autocomplete on ticker input
+const fTicker = document.getElementById('f-ticker');
+if (fTicker) {
+  fTicker.addEventListener('input', function() {
+    clearTimeout(autocompleteTimeout);
+    const q = fTicker.value.trim();
+    if (q.length < 2) { const d=document.getElementById('ticker-autocomplete'); if(d) d.style.display='none'; return; }
+    autocompleteTimeout = setTimeout(async () => {
+      const results = await searchTickerAutocomplete(q);
+      showAutocomplete(results);
+    }, 300);
+  });
+  fTicker.addEventListener('blur', function() {
+    setTimeout(() => { const d=document.getElementById('ticker-autocomplete'); if(d) d.style.display='none'; }, 200);
+  });
+  fTicker.addEventListener('focus', function() {
+    if (fTicker.value.trim().length >= 2) {
+      const d=document.getElementById('ticker-autocomplete');
+      if(d) d.style.display='block';
+    }
+  });
+}
+
 ['f-qty','f-preco-medio','f-preco-atual','f-cash-val'].forEach(id=>{
   const el=document.getElementById(id);
   if(el) el.addEventListener('input', updatePreview);
@@ -690,32 +750,7 @@ document.getElementById('btn-importar-analisar').addEventListener('click', async
     let positions=[];
     try{const clean=text.replace(/```json|```/g,'').trim();positions=JSON.parse(clean);}
     catch{toast('Não foi possível ler as posições. Tenta com uma imagem mais clara.');}
-    // Resolve tickers with correct exchange suffixes before showing table
-    document.getElementById('import-loading').querySelector('span').textContent='A verificar tickers...';
-    const resolved = await Promise.all(positions.map(async p => {
-      if (!p.ticker) return p;
-      if (p.ticker.includes('.') || p.ticker.includes('-')) return p;
-      // Test all suffixes in parallel, pick the one with highest volume
-      const suffixes = ['','.DE','.L','.PA','.AS','.MC','.MI','.LS','.SW','.BR','.HE','.ST','.OL','.CO','.VI','.WA','.T','.HK','.AX','.SA','.NS','.KS','.TO'];
-      const results = await Promise.all(suffixes.map(async suffix => {
-        try {
-          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${p.ticker+suffix}?interval=1d&range=1d`;
-          const data = await yahooFetch(url);
-          const meta = data?.chart?.result?.[0]?.meta;
-          if (!meta?.regularMarketPrice) return null;
-          return {
-            ticker: p.ticker+suffix,
-            volume: meta.regularMarketVolume || meta.averageDailyVolume3Month || 0
-          };
-        } catch { return null; }
-      }));
-      // Pick the result with highest volume
-      const valid = results.filter(r => r !== null);
-      if (valid.length === 0) return p;
-      const best = valid.reduce((a, b) => b.volume > a.volume ? b : a);
-      return { ...p, ticker: best.ticker };
-    }));
-    importPositions=resolved;
+    importPositions=positions;
     document.getElementById('import-loading').style.display='none';
     document.getElementById('import-result').style.display='block';
     document.getElementById('import-actions').style.display='block';
