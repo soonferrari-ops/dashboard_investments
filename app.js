@@ -806,9 +806,10 @@ document.getElementById('btn-importar-analisar').addEventListener('click', async
     document.getElementById('import-actions').style.display='block';
     renderImportTable(positions);
   } catch(err) {
+    console.error('Import AI error:', err);
     document.getElementById('import-loading').style.display='none';
     document.getElementById('import-actions').style.display='block';
-    toast('Erro ao contactar a IA.');
+    toast('Erro: ' + (err.message||err));
   }
 });
 
@@ -831,13 +832,15 @@ function renderImportTable(positions) {
     input.addEventListener('input', function() {
       clearTimeout(acTimeout);
       const q = input.value.trim();
-      if (q.length < 2) { hideImportAC(i); return; }
+      if (q.length < 2) { try{hideImportAC(i);}catch{} return; }
       acTimeout = setTimeout(async () => {
-        const results = await searchTickerAutocomplete(q);
-        showImportAC(i, results, input);
+        try {
+          const results = await searchTickerAutocomplete(q);
+          showImportAC(i, results, input);
+        } catch(e) { console.warn('Autocomplete error:', e); }
       }, 300);
     });
-    input.addEventListener('blur', () => setTimeout(() => hideImportAC(i), 200));
+    input.addEventListener('blur', () => setTimeout(() => { try{hideImportAC(i);}catch{} }, 200));
   });
 }
 
