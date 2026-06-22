@@ -665,35 +665,27 @@ function openModalGrouped(indices) {
   document.getElementById('modal-backdrop').querySelector('.modal-title').textContent = 
     ativos[indices[0]]?.ticker + ' — ' + indices.length + ' entradas';
   
-  body.innerHTML = indices.map((idx, i) => {
+  body.innerHTML = indices.map(function(idx, i) {
     const a = ativos[idx];
     if (!a) return '';
-    return `
-      <div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:12px">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em">Entrada ${i+1}</div>
-        <input type="hidden" class="grouped-idx" value="${idx}">
-        <div class="form-row">
-          <div class="form-group"><label class="label">Quantidade</label><input class="input grouped-qty" type="number" step="any" value="${a.qty}"/></div>
-          <div class="form-group">
-            <label class="label">Moeda</label>
-            <select class="input grouped-moeda">
-              ${['EUR','USD','GBP','GBX','JPY','CHF','CAD','AUD','BRL','SEK','NOK','DKK','HKD','SGD','CNY'].map(m=>`<option value="${m}" ${(a.moedaCompra||'EUR')===m?'selected':''}>${m}</option>`).join('')}
-            </select>
-          </div>
-          <div class="form-group"><label class="label">Preço médio</label><input class="input grouped-pm" type="number" step="any" value="${a.precoMedioOriginal||a.precoMedio}"/></div>
-          <div class="form-group"><label class="label">Preço atual (€)</label><input class="input grouped-pa" type="number" step="any" value="${a.precoAtual}"/></div>
-        </div>
-        <div style="text-align:right;margin-top:8px">
-          <button class="btn btn-ghost" style="font-size:11px;color:var(--neg)" data-delete-idx="${idx}">Apagar esta entrada</button>
-        </div>
-      </div>`;
+    const moedas = ['EUR','USD','GBP','GBX','JPY','CHF','CAD','AUD','BRL','SEK','NOK','DKK','HKD','SGD','CNY'];
+    const moedaOpts = moedas.map(function(m){ return '<option value="'+m+'" '+(( a.moedaCompra||'EUR')===m?'selected':'')+'>'+m+'</option>'; }).join('');
+    return '<div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:12px">'
+      + '<div style="font-size:11px;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em">Entrada '+(i+1)+'</div>'
+      + '<input type="hidden" class="grouped-idx" value="'+idx+'">'
+      + '<div class="form-row">'
+      + '<div class="form-group"><label class="label">Quantidade</label><input class="input grouped-qty" type="number" step="any" value="'+a.qty+'"/></div>'
+      + '<div class="form-group"><label class="label">Moeda</label><select class="input grouped-moeda">'+moedaOpts+'</select></div>'
+      + '<div class="form-group"><label class="label">Preço médio</label><input class="input grouped-pm" type="number" step="any" value="'+(a.precoMedioOriginal||a.precoMedio)+'"/></div>'
+      + '<div class="form-group"><label class="label">Preço atual (€)</label><input class="input grouped-pa" type="number" step="any" value="'+a.precoAtual+'"/></div>'
+      + '</div>'
+      + '<div style="text-align:right;margin-top:8px"><button class="btn btn-ghost" style="font-size:11px;color:var(--neg)" data-delete-idx="'+idx+'">Apagar esta entrada</button></div>'
+      + '</div>';
   }).join('');
   
   // Replace footer buttons
   const footer = document.getElementById('modal-backdrop').querySelector('.modal-footer');
-  footer.innerHTML = `
-    <span style="font-size:12px;color:var(--text2)">${indices.length} entradas agrupadas</span>
-    <button class="btn btn-primary" id="btn-grouped-guardar">Guardar todas</button>`;
+  footer.innerHTML = '<span style="font-size:12px;color:var(--text2)">'+indices.length+' entradas agrupadas</span><button class="btn btn-primary" id="btn-grouped-guardar">Guardar todas</button>';
   
   modal.style.display = 'flex';
   
