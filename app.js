@@ -781,7 +781,34 @@ document.getElementById('btn-importar-analisar').addEventListener('click', async
   document.getElementById('import-loading').style.display='flex';
   document.getElementById('import-actions').style.display='none';
   document.getElementById('import-result').style.display='none';
-  const aiPrompt=`Analisa esta screenshot de ${selectedBroker} e extrai todas as posições de investimento visíveis.\n\nPara cada posição, devolve um JSON array com este formato exacto:\n[\n  {\n    "ticker": "AAPL",\n    "nome": "Apple Inc.",\n    "tipo": "Ação",\n    "qty": 10.5,\n    "precoMedio": 150.23,\n    "moeda": "USD"\n  }\n]\n\nRegras:\n- "tipo" deve ser: "Ação", "ETF", "Cripto" ou "Cash"\n- "ticker" deve ser o símbolo de bolsa (ex: AAPL, VWCE, BTC)\n- "moeda" deve ser a moeda em que o preço médio está (USD, EUR, GBP, GBX, etc)\n- "precoMedio" é o preço médio de compra\n- Se não conseguires determinar um campo, usa null\n- Devolve APENAS o JSON, sem texto adicional, sem markdown`;
+  const aiPrompt=`Analisa esta screenshot de ${selectedBroker} e extrai todas as posições de investimento visíveis.
+
+Para cada posição, devolve um JSON array com este formato exacto:
+[
+  {
+    "ticker": "AAPL",
+    "nome": "Apple Inc.",
+    "tipo": "Ação",
+    "qty": 10.5,
+    "precoMedio": 150.23,
+    "moeda": "USD"
+  }
+]
+
+REGRAS CRÍTICAS:
+- "ticker" DEVE incluir o sufixo da bolsa correto para Yahoo Finance:
+  * Ações americanas (NASDAQ/NYSE): sem sufixo (AAPL, MRAM, OUST)
+  * Ações britânicas (LSE): .L (IQE.L, BARC.L)
+  * Ações alemãs (XETRA/Frankfurt): .DE (7H6.DE, LPK.DE, BMW.DE)
+  * Ações francesas: .PA, suecas: .ST, norueguesas: .OL, finlandesas: .HE
+  * Se vires "FWB2" ou "XETRA" ou "Frankfurt" na imagem, o sufixo é .DE
+  * Se vires "LSE" ou "London" na imagem, o sufixo é .L
+  * Se vires "NASDAQ" ou "NYSE" na imagem, sem sufixo
+- "tipo" deve ser: "Ação", "ETF", "Cripto" ou "Cash"
+- "moeda" é a moeda do preço médio (USD, EUR, GBP, GBX, etc)
+- "precoMedio" é o preço médio de compra (número após "@" se visível)
+- Se não conseguires determinar um campo, usa null
+- Devolve APENAS o JSON array, sem texto adicional, sem markdown`;
   try {
     const response=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:importMediaType,data:importImageBase64}},{type:'text',text:aiPrompt}]}]})});
     const data=await response.json();
@@ -817,7 +844,7 @@ function renderImportTable(positions) {
   const wrap=document.getElementById('import-table-wrap'),title=document.getElementById('import-result-title');
   if(!positions||positions.length===0){wrap.innerHTML='<div class="empty-state"><p>Não foram detetadas posições.<br>Tenta com uma imagem mais clara.</p></div>';title.textContent='Nenhuma posição detetada';return;}
   title.textContent=`${positions.length} posição(ões) detetada(s)`;
-  wrap.innerHTML=`<table class="import-table"><thead><tr><th>Ticker</th><th>Nome</th><th>Tipo</th><th>Qtd</th><th>Preço médio</th><th>Moeda</th><th></th></tr></thead><tbody>${positions.map((p,i)=>`<tr id="import-row-${i}"><td><input class="input" id="imp-ticker-${i}" value="${p.ticker||''}" style="width:80px"/></td><td><input class="input" id="imp-nome-${i}" value="${p.nome||''}" style="width:140px"/></td><td><select class="input" id="imp-tipo-${i}" style="width:90px"><option value="Ação" ${p.tipo==='Ação'?'selected':''}>Ação</option><option value="ETF" ${p.tipo==='ETF'?'selected':''}>ETF</option><option value="Cripto" ${p.tipo==='Cripto'?'selected':''}>Cripto</option><option value="Cash" ${p.tipo==='Cash'?'selected':''}>Cash</option></select></td><td><input class="input" id="imp-qty-${i}" value="${p.qty||''}" type="number" step="any" style="width:80px"/></td><td><input class="input" id="imp-pm-${i}" value="${p.precoMedio||''}" type="number" step="any" style="width:90px"/></td><td><select class="input" id="imp-moeda-${i}" style="width:80px">${MOEDAS_OPTIONS.replace(`value="${p.moeda||'EUR'}"`,`value="${p.moeda||'EUR'}" selected`)}</select></td><td><button class="btn-skip" data-skip="${i}">Ignorar</button></td></tr>`).join('')}</tbody></table>`;
+  wrap.innerHTML=`<table class="import-table"><thead><tr><th>Ticker</th><th>Nome</th><th>Tipo</th><th>Qtd</th><th>Preço médio</th><th>Moeda</th><th></th></tr></thead><tbody>${positions.map((p,i)=>`<tr id="import-row-${i}"><td><input class="input" id="imp-ticker-${i}" value="${p.ticker||''}" style="width:80px" autocomplete="off"/></td><td><input class="input" id="imp-nome-${i}" value="${p.nome||''}" style="width:140px"/></td><td><select class="input" id="imp-tipo-${i}" style="width:90px"><option value="Ação" ${p.tipo==='Ação'?'selected':''}>Ação</option><option value="ETF" ${p.tipo==='ETF'?'selected':''}>ETF</option><option value="Cripto" ${p.tipo==='Cripto'?'selected':''}>Cripto</option><option value="Cash" ${p.tipo==='Cash'?'selected':''}>Cash</option></select></td><td><input class="input" id="imp-qty-${i}" value="${p.qty||''}" type="number" step="any" style="width:80px"/></td><td><input class="input" id="imp-pm-${i}" value="${p.precoMedio||''}" type="number" step="any" style="width:90px"/></td><td><select class="input" id="imp-moeda-${i}" style="width:80px">${MOEDAS_OPTIONS.replace(`value="${p.moeda||'EUR'}"`,`value="${p.moeda||'EUR'}" selected`)}</select></td><td><button class="btn-skip" data-skip="${i}">Ignorar</button></td></tr>`).join('')}</tbody></table>`;
   document.querySelectorAll('[data-skip]').forEach(btn=>btn.addEventListener('click',function(){
     const i=btn.dataset.skip,row=document.getElementById(`import-row-${i}`);
     if(btn.classList.contains('skipped')){btn.classList.remove('skipped');btn.textContent='Ignorar';row.classList.remove('import-row-skip');}
