@@ -156,7 +156,8 @@ body {
   margin-bottom: 20px;
 }
 .chart-wrap { position: relative; height: 200px; }
-.donut-wrap { display: flex; align-items: center; justify-content: center; height: 160px; }
+.donut-wrap { display: flex; align-items: center; justify-content: center; height: 200px; }
+.donut-wrap canvas { max-height: 180px; }
 .donut-center {
   position: absolute;
   font-family: var(--mono);
@@ -848,4 +849,44 @@ select.input option { background: var(--bg2); color: var(--text); }
 .btn-reset-evo:hover {
   border-color: var(--neg);
   color: var(--neg);
+}
+
+/* ── Toggle switch ── */
+.toggle-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.toggle-switch input { display: none; }
+.toggle-track {
+  width: 36px;
+  height: 20px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  position: relative;
+  transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+.toggle-thumb {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--text3);
+  transition: transform 0.2s, background 0.2s;
+}
+.toggle-switch input:checked + .toggle-track {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.toggle-switch input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(16px);
+  background: #fff;
+}
+.toggle-label {
+  font-size: 13px;
+  color: var(--text2);
 }

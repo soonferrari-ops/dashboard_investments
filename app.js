@@ -525,12 +525,18 @@ function sortAtivos(ativos) {
 }
 
 // ── Ativos ────────────────────────────────────────────────────────
+function getAgrupar() { return currentP().agrupar !== false; }
+
 function renderAtivos() {
   const rawAtivos=getAtivos(),p=currentP();
-  const ativos=mergeAtivos(rawAtivos);
-  const hasDupes=rawAtivos.length>ativos.length;
+  const agrupar=getAgrupar();
+  const merged=mergeAtivos(rawAtivos);
+  const ativos=agrupar ? merged : rawAtivos.map((a,i)=>({...a,_indices:[i]}));
+  const hasDupes=rawAtivos.length>merged.length;
+  const toggle=document.getElementById('toggle-agrupar');
+  if(toggle) toggle.checked=agrupar;
   document.getElementById('ativos-title').textContent=p.nome;
-  document.getElementById('ativos-sub').textContent=rawAtivos.length+' posições'+(hasDupes?' ('+( rawAtivos.length-ativos.length)+' duplicado(s)':'')+(hasDupes?')':'');
+  document.getElementById('ativos-sub').textContent=rawAtivos.length+' posições'+(hasDupes&&!agrupar?' ('+(rawAtivos.length-merged.length)+' duplicado(s))':'');
   const tbody=document.getElementById('ativos-tbody'),table=document.getElementById('ativos-table'),empty=document.getElementById('ativos-empty');
   tbody.innerHTML='';
   if(ativos.length===0){table.style.display='none';empty.style.display='block';return;}
@@ -1061,6 +1067,13 @@ document.getElementById('btn-refresh-all').addEventListener('click', atualizarTo
 document.getElementById('btn-clear-key').addEventListener('click',function(){
   if(getApiKey()){if(confirm('Apagar a chave API guardada?')){localStorage.removeItem(API_KEY_STORAGE);toast('✓ Chave apagada');}}
   else{toast('Não há chave guardada');}
+});
+
+// ── Toggle agrupar ────────────────────────────────────────────────
+document.getElementById('toggle-agrupar').addEventListener('change', function() {
+  currentP().agrupar = this.checked;
+  saveAll();
+  renderAtivos();
 });
 
 // ── Sort ──────────────────────────────────────────────────────────
