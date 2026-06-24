@@ -562,8 +562,7 @@ function renderAtivos() {
     const val=valorAtivo(a),custo=custoAtivo(a),gl=val-custo,glPct=custo>0?(gl/custo)*100:0,peso=total>0?(val/total)*100:0,cor=COLORS[a.tipo]||'#888';
     const pmDisplay=a.moedaCompra&&a.moedaCompra!=='EUR'?`<span style="font-size:11px;color:var(--text2)">${a.moedaCompra} ${Number(a.precoMedioOriginal||a.precoMedio).toFixed(2)}</span><br>${fmt(a.precoMedio)}`:fmt(a.precoMedio);
     const isGrouped = a._indices && a._indices.length > 1;
-    const editIdx = a._indices ? a._indices[0] : rawAtivos.indexOf(a);
-    const editIndices = a._indices ? a._indices.join(',') : String(editIdx);
+    const editIndices = a._indices ? a._indices.join(',') : '0';
     const tr=document.createElement('tr');
     tr.innerHTML=`<td><div class="ticker-name">${a.ticker}</div><div class="ticker-full">${a.nome}${isGrouped?` <span style="font-size:10px;color:var(--text3)">(${a._indices.length}×)</span>`:''}</div></td><td><span class="tag tag-${a.tipo}">${a.tipo}</span></td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':Number(a.qty).toLocaleString('en-GB')}</td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':pmDisplay}</td><td class="right" style="font-family:var(--mono)">${a.tipo==='Cash'?'—':fmt(parseFloat(a.precoAtual)||0)}</td><td class="right" style="font-family:var(--mono)">${fmt(val)}</td><td class="right"><div class="${gl>=0?'pos':'neg'}" style="font-family:var(--mono)">${fmt(gl)}</div><div class="${gl>=0?'pos':'neg'}" style="font-size:11px">${fmtPct(glPct)}</div></td><td class="right"><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px"><div class="bar-wrap"><div class="bar" style="width:${Math.min(peso,100)}%;background:${cor}"></div></div><span style="font-size:12px;font-family:var(--mono);color:var(--text2)">${peso.toFixed(1)}%</span></div></td><td><button class="btn-icon" data-edit="${editIndices}">✎</button></td>`;
     tbody.appendChild(tr);
