@@ -779,6 +779,28 @@ function openModalGrouped(indices) {
 
 function openModal(idx) {
   const a=getAtivos()[idx];
+  // Always restore original modal structure in case it was replaced by grouped modal
+  const body=document.getElementById('modal-backdrop').querySelector('.modal-body');
+  body.innerHTML=`
+    <div class="form-row">
+      <div class="form-group"><label class="label">Ticker</label><input class="input" id="edit-ticker" type="text"/></div>
+      <div class="form-group"><label class="label">Nome</label><input class="input" id="edit-nome" type="text"/></div>
+    </div>
+    <input type="hidden" id="edit-idx"/>
+    <div class="form-row" id="edit-row-normal">
+      <div class="form-group"><label class="label">Quantidade</label><input class="input" id="edit-qty" type="number" step="any"/></div>
+      <div class="form-group"><label class="label">Moeda</label><select class="input" id="edit-moeda"></select></div>
+      <div class="form-group"><label class="label">Preço médio</label><input class="input" id="edit-preco-medio" type="number" step="any"/></div>
+      <div class="form-group"><label class="label">Preço atual (€)</label><input class="input" id="edit-preco-atual" type="number" step="any"/></div>
+    </div>
+    <div class="form-row" id="edit-row-cash" style="display:none">
+      <div class="form-group"><label class="label">Valor (€)</label><input class="input" id="edit-cash-val" type="number" step="any"/></div>
+      <div class="form-group"><label class="label">Juro anual (%)</label><input class="input" id="edit-cash-juro" type="number" step="any"/></div>
+    </div>`;
+  const footer=document.getElementById('modal-backdrop').querySelector('.modal-footer');
+  footer.innerHTML='<button class="btn btn-ghost" id="btn-apagar">Apagar</button><button class="btn btn-primary" id="btn-editar-guardar">Guardar</button>';
+  attachModalListeners();
+  // Now populate fields
   document.getElementById('edit-idx').value=idx;
   document.getElementById('edit-ticker').value=a.ticker;
   document.getElementById('edit-nome').value=a.nome;
