@@ -56,6 +56,12 @@ function mergeAtivos(ativos) {
       map[key] = { ...a, qty, _totalCusto: qty*(parseFloat(a.precoMedio)||0), _indices:[idx] };
     } else {
       const existing = map[key];
+      // Cash: sum cashVal directly
+      if (a.tipo === 'Cash') {
+        existing.cashVal = (parseFloat(existing.cashVal)||0) + (parseFloat(a.cashVal)||0);
+        existing._indices.push(idx);
+        return;
+      }
       const newQty = parseFloat(a.qty)||0;
       const totalQty = existing.qty + newQty;
       existing._totalCusto += newQty*(parseFloat(a.precoMedio)||0);
@@ -529,6 +535,12 @@ function sortAtivos(ativos) {
 
 // ── Ativos ────────────────────────────────────────────────────────
 function getAgrupar() { return currentP().agrupar !== false; }
+
+// Migrate existing portfolios: set agrupar=true if undefined
+function migratePortfolios() {
+  portfolios.forEach(p => { if(p.agrupar === undefined) p.agrupar = true; });
+  saveAll();
+}
 
 function renderAtivos() {
   const rawAtivos=getAtivos(),p=currentP();
@@ -1121,6 +1133,7 @@ document.addEventListener('click', function(e) {
 });
 
 // ── Init ──────────────────────────────────────────────────────────
+migratePortfolios();
 toggleCashFields();
 renderSidebar();
 prefetchAllRates().then(()=>renderDashboard());
