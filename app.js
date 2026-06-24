@@ -5,6 +5,78 @@ const PORTFOLIO_COLORS = ['#5b8dee','#9b7de8','#4caf82','#e6a140','#e05c5c','#5b
 const COLORS = { 'Ação':'#5b8dee','ETF':'#9b7de8','Cripto':'#e6a140','Cash':'#4caf82' };
 const FX_CACHE = {};
 let fxFetchedAll = false;
+let currentUser = null;
+
+// ── Firebase sync ─────────────────────────────────────────────────
+async function saveAll() {
+  localStorage.setItem(PORTFOLIOS_KEY, JSON.stringify(portfolios));
+  if (currentUser && window._firebase) {
+    try {
+      const { db, doc, setDoc } = window._firebase;
+      await setDoc(doc(db, 'users', currentUser.uid), { portfolios: JSON.stringify(portfolios) });
+    } catch(e) { console.warn('Firestore save failed:', e); }
+  }
+}
+
+async function loadFromFirestore(uid) {
+  if (!window._firebase) return false;
+  try {
+    const { db, doc, getDoc } = window._firebase;
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (snap.exists()) {
+      const data = JSON.parse(snap.data().portfolios || 'null');
+      if (data && data.length) {
+        portfolios = data;
+        currentPortfolioId = portfolios[0].id;
+        migratePortfolios();
+        renderSidebar();
+        renderDashboard();
+        return true;
+      }
+    }
+  } catch(e) { console.warn('Firestore load failed:', e); }
+  return false;
+}
+
+// Wait for Firebase to be ready then setup auth
+window.addEventListener('load', () => {
+  // Small delay to ensure Firebase module loads
+  setTimeout(() => {
+    if (!window._firebase) return;
+    const { auth, onAuthStateChanged, provider, signInWithPopup, signOut } = window._firebase;
+
+    onAuthStateChanged(auth, async user => {
+      currentUser = user;
+      const loginBtn  = document.getElementById('btn-google-login');
+      const userInfo  = document.getElementById('user-info');
+      const userName  = document.getElementById('user-name');
+      const userAvatar = document.getElementById('user-avatar');
+
+      if (user) {
+        loginBtn.style.display  = 'none';
+        userInfo.style.display  = 'flex';
+        userName.textContent    = user.displayName || user.email;
+        userAvatar.src          = user.photoURL || '';
+        document.getElementById('last-update').innerHTML += '<span class="sync-dot" title="Sincronizado com Google"></span>';
+        await loadFromFirestore(user.uid);
+      } else {
+        loginBtn.style.display  = 'flex';
+        userInfo.style.display  = 'none';
+      }
+    });
+
+    document.getElementById('btn-google-login').addEventListener('click', async () => {
+      try { await signInWithPopup(auth, provider); }
+      catch(e) { toast('Erro ao iniciar sessão'); console.error(e); }
+    });
+
+    document.getElementById('btn-signout').addEventListener('click', async () => {
+      await signOut(auth);
+      currentUser = null;
+      toast('Sessão terminada');
+    });
+  }, 500);
+});
 
 // ── Helpers ───────────────────────────────────────────────────────
 function uid() { return Math.random().toString(36).slice(2,10); }
@@ -36,7 +108,6 @@ function currentP()  { return portfolios.find(p=>p.id===currentPortfolioId)||por
 function getAtivos() { return currentP().ativos; }
 
 // ── Persistência ──────────────────────────────────────────────────
-function saveAll() { localStorage.setItem(PORTFOLIOS_KEY, JSON.stringify(portfolios)); }
 function saveAtivos() {
   const p = currentP(), today = new Date().toISOString().split('T')[0];
   p.history = (p.history||[]).filter(h=>h.d!==today);
