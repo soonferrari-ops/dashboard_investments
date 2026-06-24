@@ -51,6 +51,7 @@ function mergeAtivos(ativos) {
   const map = {};
   ativos.forEach((a, idx) => {
     const key = a.ticker.toUpperCase() + '|' + a.tipo;
+    console.log('merge key:', key, 'cashVal:', a.cashVal);
     if (!map[key]) {
       const qty = parseFloat(a.qty)||0;
       map[key] = { ...a, qty, _totalCusto: qty*(parseFloat(a.precoMedio)||0), _indices:[idx] };
