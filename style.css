@@ -1060,7 +1060,15 @@ select.input option { background: var(--bg2); color: var(--text); }
 .table-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  margin: 0 -22px;
+  padding: 0 4px;
 }
 .table-scroll .table {
-  min-width: 600px;
+  min-width: 580px;
+  width: 100%;
+}
+@media (max-width: 640px) {
+  .table-scroll {
+    margin: 0 -16px;
+  }
 }
