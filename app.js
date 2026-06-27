@@ -399,6 +399,10 @@ function showPage(id) {
   if (id==='ativos')    renderAtivos();
   if (id==='analise')   { const el=document.getElementById('analise-sub'); if(el) el.textContent=currentP().nome; }
   if (id==='adicionar') { const el=document.getElementById('adicionar-sub'); if(el) el.textContent='A adicionar em: '+currentP().nome; }
+  // Update mobile title
+  const titles = { global:'Global', dashboard:'Dashboard', ativos:'Ativos', analise:'Análise IA', adicionar:'Adicionar', importar:'Importar' };
+  const mobileTitle = document.getElementById('mobile-title');
+  if (mobileTitle) mobileTitle.textContent = titles[id] || 'Portfolio';
 }
 
 document.addEventListener('click', function(e) {
@@ -1237,6 +1241,26 @@ document.addEventListener('click', function(e) {
     return;
   }
   sortMenu.style.display = 'none';
+});
+
+// ── Mobile hamburger ──────────────────────────────────────────────
+const hamburger = document.getElementById('hamburger');
+const sidebar   = document.getElementById('sidebar');
+const overlay   = document.getElementById('sidebar-overlay');
+
+function openSidebar()  { sidebar.classList.add('open'); overlay.classList.add('visible'); hamburger.classList.add('open'); }
+function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('visible'); hamburger.classList.remove('open'); }
+
+hamburger.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+overlay.addEventListener('click', closeSidebar);
+
+// Close sidebar when nav item clicked on mobile
+document.getElementById('sidebar-nav').addEventListener('click', () => {
+  if (window.innerWidth <= 640) closeSidebar();
+});
+
+document.getElementById('mobile-refresh').addEventListener('click', () => {
+  document.getElementById('btn-refresh-all').click();
 });
 
 // ── Init ──────────────────────────────────────────────────────────

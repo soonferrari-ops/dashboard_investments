@@ -43,7 +43,19 @@
 </head>
 <body>
 
-  <aside class="sidebar">
+  <!-- Mobile header -->
+  <div class="mobile-header" id="mobile-header">
+    <button class="hamburger" id="hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <span class="mobile-title" id="mobile-title">Portfolio</span>
+    <button class="mobile-refresh" id="mobile-refresh" title="Atualizar preços">↻</button>
+  </div>
+
+  <!-- Overlay para fechar sidebar -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <aside class="sidebar" id="sidebar">
     <div class="logo">
       <span class="logo-icon">◈</span>
       <span class="logo-text">Portfolio</span>
