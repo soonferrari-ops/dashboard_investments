@@ -33,11 +33,14 @@ function applyI18n() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     el.textContent = t(el.dataset.i18n);
   });
-  // Translate nav items (text node after SVG)
+  // Translate nav items — find text node after SVG
   document.querySelectorAll('[data-i18n-nav]').forEach(el => {
     const key = el.dataset.i18nNav;
-    const lastNode = el.childNodes[el.childNodes.length - 1];
-    if (lastNode && lastNode.nodeType === 3) lastNode.textContent = '\n        ' + t(key) + '\n      ';
+    Array.from(el.childNodes).forEach(node => {
+      if (node.nodeType === 3 && node.textContent.trim().length > 0) {
+        node.textContent = '\n        ' + t(key) + '\n      ';
+      }
+    });
   });
   const globalSub = document.querySelector('#page-global .page-sub');
   if (globalSub) globalSub.textContent = t('globalSub');
