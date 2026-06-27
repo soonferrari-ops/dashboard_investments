@@ -65,7 +65,7 @@
     <div class="portfolio-section">
       <div class="portfolio-label">PORTFOLIOS</div>
       <div id="portfolio-list"></div>
-      <button class="btn-new-portfolio" id="btn-new-portfolio">+ Novo portfolio</button>
+      <button class="btn-new-portfolio" id="btn-new-portfolio" data-i18n="novoPortfolio">+ Novo portfolio</button>
     </div>
 
     <div class="nav-divider"></div>
@@ -100,7 +100,7 @@
     <div class="sidebar-footer">
       <div id="last-update">—</div>
       <button class="btn-refresh" id="btn-refresh-all">↻ Atualizar preços</button>
-      <button class="btn-refresh btn-refresh--danger" id="btn-clear-key" style="margin-top:6px">✕ Apagar chave IA</button>
+      <button class="btn-refresh btn-refresh--danger" id="btn-clear-key" style="margin-top:6px" data-i18n="apagarChave">✕ Apagar chave IA</button>
       <div class="user-bar" id="user-bar">
         <div class="user-info" id="user-info" style="display:none">
           <img class="user-avatar" id="user-avatar" src="" alt="" />
@@ -179,22 +179,22 @@
       </header>
       <div class="metrics-grid">
         <div class="metric-card accent">
-          <div class="metric-label">Valor total</div>
+          <div class="metric-label" data-i18n="valorTotal">Valor total</div>
           <div class="metric-value" id="m-total">€0,00</div>
           <div class="metric-trend" id="m-total-sub">—</div>
         </div>
         <div class="metric-card">
-          <div class="metric-label">Ganho / Perda</div>
+          <div class="metric-label" data-i18n="ganhoPerda">Ganho / Perda</div>
           <div class="metric-value" id="m-gl">€0,00</div>
           <div class="metric-trend" id="m-gl-pct">—</div>
         </div>
         <div class="metric-card">
-          <div class="metric-label">Custo base</div>
+          <div class="metric-label" data-i18n="custoBase">Custo base</div>
           <div class="metric-value" id="m-custo">€0,00</div>
-          <div class="metric-trend">valor investido</div>
+          <div class="metric-trend" data-i18n="valorInvestido">valor investido</div>
         </div>
         <div class="metric-card">
-          <div class="metric-label">Cash disponível</div>
+          <div class="metric-label" data-i18n="cashDisp">Cash disponível</div>
           <div class="metric-value" id="m-cash">€0,00</div>
           <div class="metric-trend" id="m-cash-pct">—</div>
         </div>
@@ -243,7 +243,7 @@
         <div class="empty-state" id="dash-empty"><p>Ainda não tens ativos.<br><a href="#" class="link" data-page="adicionar">Adiciona o primeiro →</a></p></div>
         <div class="table-scroll">
           <table class="table" id="dash-table" style="display:none">
-            <thead><tr><th>Ativo</th><th>Tipo</th><th class="right">Preço atual</th><th class="right">Valor</th><th class="right">Ganho / Perda</th><th class="right">Peso</th></tr></thead>
+            <thead><tr><th data-i18n="thAtivo">Ativo</th><th data-i18n="thTipo">Tipo</th><th class="right" data-i18n="thPreco">Preço atual</th><th class="right" data-i18n="thValor">Valor</th><th class="right" data-i18n="thGanho">Ganho / Perda</th><th class="right" data-i18n="thPeso">Peso</th></tr></thead>
             <tbody id="dash-tbody"></tbody>
           </table>
         </div>
@@ -280,7 +280,7 @@
         <div class="empty-state" id="ativos-empty"><p>Ainda não tens ativos.<br><a href="#" class="link" data-page="adicionar">Adiciona o primeiro →</a></p></div>
         <div class="table-scroll">
           <table class="table" id="ativos-table" style="display:none">
-            <thead><tr><th>Ativo</th><th>Tipo</th><th class="right">Qtd.</th><th class="right">Preço médio</th><th class="right">Preço atual</th><th class="right">Valor</th><th class="right">Ganho / Perda</th><th class="right">Peso</th><th></th></tr></thead>
+            <thead><tr><th data-i18n="thAtivo">Ativo</th><th data-i18n="thTipo">Tipo</th><th class="right" data-i18n="thQtd">Qtd.</th><th class="right" data-i18n="thPrecoMedio">Preço médio</th><th class="right" data-i18n="thPreco">Preço atual</th><th class="right" data-i18n="thValor">Valor</th><th class="right" data-i18n="thGanho">Ganho / Perda</th><th class="right" data-i18n="thPeso">Peso</th><th></th></tr></thead>
             <tbody id="ativos-tbody"></tbody>
           </table>
         </div>
