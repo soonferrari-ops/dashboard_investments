@@ -40,60 +40,55 @@ async function loadFromFirestore(uid) {
 
 // Wait for Firebase to be ready then setup auth
 window.addEventListener('load', () => {
-  setTimeout(() => {
+  setTimeout(async () => {
     if (!window._firebase) return;
     const { auth, onAuthStateChanged, provider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } = window._firebase;
 
-    // Handle redirect result on page load (when returning from Google)
-    getRedirectResult(auth).then(async result => {
+    // Handle redirect result silently
+    try {
+      const result = await getRedirectResult(auth);
       if (result?.user) toast('✓ Sessão iniciada');
-    }).catch(e => console.warn('Redirect result:', e));
+    } catch(e) { /* silently ignore */ }
 
-    onAuthStateChanged(auth, async user => {
-      currentUser = user;
-      const loginBtn   = document.getElementById('btn-google-login');
-      const userInfo   = document.getElementById('user-info');
-      const userName   = document.getElementById('user-name');
-      const userAvatar = document.getElementById('user-avatar');
+    // Watch auth state — wrapped so extension errors don't surface
+    try {
+      onAuthStateChanged(auth, async user => {
+        currentUser = user;
+        const loginBtn   = document.getElementById('btn-google-login');
+        const userInfo   = document.getElementById('user-info');
+        const userName   = document.getElementById('user-name');
+        const userAvatar = document.getElementById('user-avatar');
 
-      if (user) {
-        loginBtn.style.display  = 'none';
-        userInfo.style.display  = 'flex';
-        userName.textContent    = user.displayName || user.email;
-        userAvatar.src          = user.photoURL || '';
-        document.getElementById('last-update').innerHTML += '<span class="sync-dot" title="Sincronizado com Google"></span>';
-        await loadFromFirestore(user.uid);
-      } else {
-        loginBtn.style.display  = 'flex';
-        userInfo.style.display  = 'none';
-      }
-    });
+        if (user) {
+          loginBtn.style.display  = 'none';
+          userInfo.style.display  = 'flex';
+          userName.textContent    = user.displayName || user.email;
+          userAvatar.src          = user.photoURL || '';
+          document.getElementById('last-update').innerHTML += '<span class="sync-dot" title="Sincronizado com Google"></span>';
+          await loadFromFirestore(user.uid);
+        } else {
+          loginBtn.style.display  = 'flex';
+          userInfo.style.display  = 'none';
+        }
+      }, e => { /* silently ignore auth errors on init */ });
+    } catch(e) { /* silently ignore */ }
 
     document.getElementById('btn-google-login').addEventListener('click', async () => {
       try {
-        // Try popup first (melhor experiência)
         await signInWithPopup(auth, provider);
       } catch(e) {
-        if (e.code === 'auth/popup-blocked' ||
-            e.code === 'auth/popup-closed-by-user' ||
-            e.code === 'auth/cancelled-popup-request' ||
-            e.code === 'auth/api-key-not-valid' ||
-            e.message?.includes('network') ||
-            e.message?.includes('blocked')) {
-          // Fallback: redirect (funciona sempre, mesmo com extensões)
-          try { await signInWithRedirect(auth, provider); }
-          catch(e2) { toast('Erro ao iniciar sessão'); console.error(e2); }
-        } else {
-          toast('Erro ao iniciar sessão');
-          console.error(e);
-        }
+        // Any error → fallback to redirect
+        try { await signInWithRedirect(auth, provider); }
+        catch(e2) { toast('Erro ao iniciar sessão'); console.error(e2); }
       }
     });
 
     document.getElementById('btn-signout').addEventListener('click', async () => {
-      await signOut(auth);
-      currentUser = null;
-      toast('Sessão terminada');
+      try {
+        await signOut(auth);
+        currentUser = null;
+        toast('Sessão terminada');
+      } catch(e) { console.error(e); }
     });
   }, 500);
 });

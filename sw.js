@@ -1,11 +1,10 @@
-const CACHE = 'portfolio-v1';
+const CACHE = 'portfolio-v2';
 const ASSETS = [
   '/dashboard_investments/',
   '/dashboard_investments/index.html',
   '/dashboard_investments/app.js',
   '/dashboard_investments/style.css',
-  '/dashboard_investments/manifest.json',
-  'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js'
+  '/dashboard_investments/manifest.json'
 ];
 
 self.addEventListener('install', e => {
@@ -21,20 +20,21 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Network first for API calls, cache first for assets
-  if (e.request.url.includes('firebase') ||
-      e.request.url.includes('google') ||
-      e.request.url.includes('yahoo') ||
-      e.request.url.includes('anthropic')) {
-    return; // Let these go through normally
-  }
+  const url = e.request.url;
+  // Skip non-http requests (chrome-extension://, etc.)
+  if (!url.startsWith('http')) return;
+  // Skip external APIs
+  if (url.includes('firebase') || url.includes('google') ||
+      url.includes('yahoo') || url.includes('anthropic') ||
+      url.includes('googleapis')) return;
+
   e.respondWith(
     caches.match(e.request).then(cached => {
       return cached || fetch(e.request).then(res => {
-        return caches.open(CACHE).then(c => {
-          c.put(e.request, res.clone());
-          return res;
-        });
+        if (res.ok) {
+          caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+        }
+        return res;
       });
     }).catch(() => caches.match('/dashboard_investments/index.html'))
   );
