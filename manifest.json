@@ -3,19 +3,20 @@
   "short_name": "Portfolio",
   "description": "Dashboard de investimentos pessoal",
   "start_url": "/dashboard_investments/",
+  "scope": "/dashboard_investments/",
   "display": "standalone",
   "background_color": "#0d1017",
   "theme_color": "#0d1017",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "/dashboard_investments/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icon-512.png",
+      "src": "/dashboard_investments/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
