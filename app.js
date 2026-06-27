@@ -40,16 +40,20 @@ async function loadFromFirestore(uid) {
 
 // Wait for Firebase to be ready then setup auth
 window.addEventListener('load', () => {
-  // Small delay to ensure Firebase module loads
   setTimeout(() => {
     if (!window._firebase) return;
-    const { auth, onAuthStateChanged, provider, signInWithPopup, signOut } = window._firebase;
+    const { auth, onAuthStateChanged, provider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } = window._firebase;
+
+    // Handle redirect result on page load (when returning from Google)
+    getRedirectResult(auth).then(async result => {
+      if (result?.user) toast('✓ Sessão iniciada');
+    }).catch(e => console.warn('Redirect result:', e));
 
     onAuthStateChanged(auth, async user => {
       currentUser = user;
-      const loginBtn  = document.getElementById('btn-google-login');
-      const userInfo  = document.getElementById('user-info');
-      const userName  = document.getElementById('user-name');
+      const loginBtn   = document.getElementById('btn-google-login');
+      const userInfo   = document.getElementById('user-info');
+      const userName   = document.getElementById('user-name');
       const userAvatar = document.getElementById('user-avatar');
 
       if (user) {
@@ -66,8 +70,24 @@ window.addEventListener('load', () => {
     });
 
     document.getElementById('btn-google-login').addEventListener('click', async () => {
-      try { await signInWithPopup(auth, provider); }
-      catch(e) { toast('Erro ao iniciar sessão'); console.error(e); }
+      try {
+        // Try popup first (melhor experiência)
+        await signInWithPopup(auth, provider);
+      } catch(e) {
+        if (e.code === 'auth/popup-blocked' ||
+            e.code === 'auth/popup-closed-by-user' ||
+            e.code === 'auth/cancelled-popup-request' ||
+            e.code === 'auth/api-key-not-valid' ||
+            e.message?.includes('network') ||
+            e.message?.includes('blocked')) {
+          // Fallback: redirect (funciona sempre, mesmo com extensões)
+          try { await signInWithRedirect(auth, provider); }
+          catch(e2) { toast('Erro ao iniciar sessão'); console.error(e2); }
+        } else {
+          toast('Erro ao iniciar sessão');
+          console.error(e);
+        }
+      }
     });
 
     document.getElementById('btn-signout').addEventListener('click', async () => {
