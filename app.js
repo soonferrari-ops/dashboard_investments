@@ -23,16 +23,29 @@ async function loadFromFirestore(uid) {
   try {
     const { db, doc, getDoc } = window._firebase;
     const snap = await getDoc(doc(db, 'users', uid));
+    const localData = JSON.parse(localStorage.getItem(PORTFOLIOS_KEY) || 'null');
+
     if (snap.exists()) {
-      const data = JSON.parse(snap.data().portfolios || 'null');
-      if (data && data.length) {
-        portfolios = data;
+      const cloudData = JSON.parse(snap.data().portfolios || 'null');
+      if (cloudData && cloudData.length) {
+        // Use cloud data (more up to date)
+        portfolios = cloudData;
         currentPortfolioId = portfolios[0].id;
         migratePortfolios();
         renderSidebar();
         renderDashboard();
+        toast('✓ Dados sincronizados');
         return true;
       }
+    }
+    // Firestore empty — upload local data
+    if (localData && localData.length) {
+      portfolios = localData;
+      await saveAll();
+      toast('✓ Dados enviados para a cloud');
+      renderSidebar();
+      renderDashboard();
+      return true;
     }
   } catch(e) { console.warn('Firestore load failed:', e); }
   return false;
@@ -89,6 +102,14 @@ window.addEventListener('load', () => {
         currentUser = null;
         toast('Sessão terminada');
       } catch(e) { console.error(e); }
+    });
+
+    document.getElementById('btn-sync').addEventListener('click', async () => {
+      if (!currentUser) { toast('Faz login primeiro'); return; }
+      try {
+        await saveAll();
+        toast('✓ Dados enviados para a cloud');
+      } catch(e) { toast('Erro ao sincronizar'); console.error(e); }
     });
   }, 500);
 });
