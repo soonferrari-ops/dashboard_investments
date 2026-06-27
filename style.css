@@ -1072,3 +1072,54 @@ select.input option { background: var(--bg2); color: var(--text); }
     margin: 0 -16px;
   }
 }
+
+/* ── Settings button ── */
+.btn-settings {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 7px 10px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text2);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-settings:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── Settings modal ── */
+.settings-group { display: flex; flex-direction: column; gap: 8px; }
+.settings-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+.settings-options { display: flex; gap: 8px; flex-wrap: wrap; }
+.settings-opt {
+  padding: 7px 14px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  background: var(--bg3);
+  color: var(--text2);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.settings-opt:hover { border-color: var(--accent); color: var(--accent); }
+.settings-opt.active { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+/* ── Light theme ── */
+[data-theme="light"] {
+  --bg0: #f0f2f5;
+  --bg1: #ffffff;
+  --bg2: #f8f9fb;
+  --bg3: #edf0f4;
+  --text: #0f1117;
+  --text2: #4a5568;
+  --text3: #8896ab;
+  --border: #dde3ed;
+  --border2: #c8d0dd;
+  --accent: #3b7de8;
+  --pos: #1a9e5c;
+  --neg: #e05c5c;
+}

@@ -113,6 +113,10 @@
           Entrar com Google
         </button>
       </div>
+      <button class="btn-settings" id="btn-settings">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Definições
+      </button>
     </div>
   </aside>
 
@@ -523,6 +527,72 @@
       <div class="modal-footer">
         <button class="btn btn-ghost btn-ghost--danger" id="btn-apagar-portfolio" style="display:none">Apagar portfolio</button>
         <button class="btn btn-primary" id="btn-guardar-portfolio">Criar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-backdrop" id="settings-backdrop" style="display:none">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-header">
+        <span class="modal-title">Definições</span>
+        <button class="modal-close" id="settings-close">✕</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:20px">
+
+        <div class="settings-group">
+          <div class="settings-label">Tema</div>
+          <div class="settings-options">
+            <button class="settings-opt" data-theme="dark">🌙 Escuro</button>
+            <button class="settings-opt" data-theme="light">☀️ Claro</button>
+            <button class="settings-opt" data-theme="system">💻 Sistema</button>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-label">Língua</div>
+          <select class="input" id="settings-lang">
+            <option value="pt">🇵🇹 Português</option>
+            <option value="en">🇬🇧 English</option>
+            <option value="es">🇪🇸 Español</option>
+            <option value="fr">🇫🇷 Français</option>
+            <option value="de">🇩🇪 Deutsch</option>
+            <option value="it">🇮🇹 Italiano</option>
+            <option value="zh">🇨🇳 中文</option>
+            <option value="ja">🇯🇵 日本語</option>
+            <option value="ar">🇸🇦 العربية</option>
+            <option value="hi">🇮🇳 हिन्दी</option>
+          </select>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-label">Moeda padrão</div>
+          <select class="input" id="settings-currency">
+            <option value="EUR">€ EUR — Euro</option>
+            <option value="USD">$ USD — Dólar</option>
+            <option value="GBP">£ GBP — Libra</option>
+            <option value="CHF">₣ CHF — Franco Suíço</option>
+            <option value="JPY">¥ JPY — Iene</option>
+            <option value="BRL">R$ BRL — Real</option>
+            <option value="CAD">C$ CAD — Dólar Canadiano</option>
+            <option value="AUD">A$ AUD — Dólar Australiano</option>
+            <option value="CNY">¥ CNY — Yuan</option>
+            <option value="HKD">HK$ HKD — Dólar HK</option>
+          </select>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-label">Formato de números</div>
+          <div class="settings-options">
+            <button class="settings-opt" data-numfmt="pt">1.234,56</button>
+            <button class="settings-opt" data-numfmt="en">1,234.56</button>
+            <button class="settings-opt" data-numfmt="ch">1'234.56</button>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="settings-save">Guardar</button>
       </div>
     </div>
   </div>

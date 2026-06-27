@@ -1,11 +1,90 @@
 // ── Config ────────────────────────────────────────────────────────
 const PORTFOLIOS_KEY   = 'portfolios_v2';
+const SETTINGS_KEY     = 'portfolio_settings';
 const API_KEY_STORAGE  = 'portfolio_anthropic_key';
 const PORTFOLIO_COLORS = ['#5b8dee','#9b7de8','#4caf82','#e6a140','#e05c5c','#5bc4c4'];
 const COLORS = { 'Ação':'#5b8dee','ETF':'#9b7de8','Cripto':'#e6a140','Cash':'#4caf82' };
 const FX_CACHE = {};
 let fxFetchedAll = false;
 let currentUser = null;
+
+// ── Settings ──────────────────────────────────────────────────────
+const DEFAULT_SETTINGS = { theme: 'dark', lang: 'pt', currency: 'EUR', numfmt: 'pt' };
+let settings = { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') };
+
+const CURRENCY_SYMBOLS = { EUR:'€', USD:'$', GBP:'£', CHF:'₣', JPY:'¥', BRL:'R$', CAD:'C$', AUD:'A$', CNY:'¥', HKD:'HK$' };
+const TRANSLATIONS = {
+  pt: { global:'Global', dashboard:'Dashboard', ativos:'Ativos', analise:'Análise IA', adicionar:'Adicionar ativo', importar:'Importar screenshot', valorTotal:'Valor Total', ganhoPerda:'Ganho / Perda', custoBase:'Custo Base', cashDisp:'Cash Disponível', evolucao:'Evolução', alocacao:'Alocação', posicoes:'Posições', verTodas:'Ver todas →', agrupar:'Agrupar', atualizar:'Atualizar preços', definicoes:'Definições' },
+  en: { global:'Global', dashboard:'Dashboard', ativos:'Assets', analise:'AI Analysis', adicionar:'Add asset', importar:'Import screenshot', valorTotal:'Total Value', ganhoPerda:'Gain / Loss', custoBase:'Cost Basis', cashDisp:'Available Cash', evolucao:'Evolution', alocacao:'Allocation', posicoes:'Positions', verTodas:'See all →', agrupar:'Group', atualizar:'Update prices', definicoes:'Settings' },
+  es: { global:'Global', dashboard:'Dashboard', ativos:'Activos', analise:'Análisis IA', adicionar:'Añadir activo', importar:'Importar captura', valorTotal:'Valor Total', ganhoPerda:'Ganancia / Pérdida', custoBase:'Coste Base', cashDisp:'Efectivo Disponible', evolucao:'Evolución', alocacao:'Asignación', posicoes:'Posiciones', verTodas:'Ver todas →', agrupar:'Agrupar', atualizar:'Actualizar precios', definicoes:'Configuración' },
+  fr: { global:'Global', dashboard:'Tableau', ativos:'Actifs', analise:'Analyse IA', adicionar:'Ajouter actif', importar:'Importer capture', valorTotal:'Valeur Totale', ganhoPerda:'Gain / Perte', custoBase:'Coût de base', cashDisp:'Liquidités', evolucao:'Évolution', alocacao:'Allocation', posicoes:'Positions', verTodas:'Voir tout →', agrupar:'Grouper', atualizar:'Actualiser prix', definicoes:'Paramètres' },
+  de: { global:'Global', dashboard:'Dashboard', ativos:'Vermögen', analise:'KI-Analyse', adicionar:'Hinzufügen', importar:'Screenshot import', valorTotal:'Gesamtwert', ganhoPerda:'Gewinn / Verlust', custoBase:'Kostenbasis', cashDisp:'Bargeld', evolucao:'Entwicklung', alocacao:'Allokation', posicoes:'Positionen', verTodas:'Alle sehen →', agrupar:'Gruppieren', atualizar:'Preise aktualisieren', definicoes:'Einstellungen' },
+  it: { global:'Globale', dashboard:'Dashboard', ativos:'Attivi', analise:'Analisi IA', adicionar:'Aggiungi attivo', importar:'Importa screenshot', valorTotal:'Valore Totale', ganhoPerda:'Guadagno / Perdita', custoBase:'Costo Base', cashDisp:'Liquidità', evolucao:'Evoluzione', alocacao:'Allocazione', posicoes:'Posizioni', verTodas:'Vedi tutto →', agrupar:'Raggruppa', atualizar:'Aggiorna prezzi', definicoes:'Impostazioni' },
+  zh: { global:'全球', dashboard:'仪表板', ativos:'资产', analise:'AI分析', adicionar:'添加资产', importar:'导入截图', valorTotal:'总价值', ganhoPerda:'盈亏', custoBase:'成本基础', cashDisp:'可用现金', evolucao:'演变', alocacao:'分配', posicoes:'持仓', verTodas:'查看全部 →', agrupar:'分组', atualizar:'更新价格', definicoes:'设置' },
+  ja: { global:'グローバル', dashboard:'ダッシュボード', ativos:'資産', analise:'AI分析', adicionar:'資産追加', importar:'スクショ読込', valorTotal:'総資産', ganhoPerda:'損益', custoBase:'取得原価', cashDisp:'現金', evolucao:'推移', alocacao:'配分', posicoes:'ポジション', verTodas:'全て見る →', agrupar:'グループ', atualizar:'価格更新', definicoes:'設定' },
+  ar: { global:'عالمي', dashboard:'لوحة التحكم', ativos:'الأصول', analise:'تحليل AI', adicionar:'إضافة أصل', importar:'استيراد لقطة', valorTotal:'القيمة الإجمالية', ganhoPerda:'ربح / خسارة', custoBase:'التكلفة الأساسية', cashDisp:'النقد المتاح', evolucao:'التطور', alocacao:'التخصيص', posicoes:'المراكز', verTodas:'عرض الكل →', agrupar:'تجميع', atualizar:'تحديث الأسعار', definicoes:'الإعدادات' },
+  hi: { global:'वैश्विक', dashboard:'डैशबोर्ड', ativos:'संपत्ति', analise:'AI विश्लेषण', adicionar:'संपत्ति जोड़ें', importar:'स्क्रीनशॉट आयात', valorTotal:'कुल मूल्य', ganhoPerda:'लाभ / हानि', custoBase:'लागत आधार', cashDisp:'उपलब्ध नकद', evolucao:'विकास', alocacao:'आवंटन', posicoes:'पोजीशन', verTodas:'सभी देखें →', agrupar:'समूह', atualizar:'कीमतें अपडेट', definicoes:'सेटिंग्स' },
+};
+
+function t(key) { return (TRANSLATIONS[settings.lang] || TRANSLATIONS.pt)[key] || key; }
+function currencySymbol() { return CURRENCY_SYMBOLS[settings.currency] || '€'; }
+
+function applyTheme(theme) {
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark = theme === 'dark' || (theme === 'system' && prefersDark);
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+}
+
+function applySettings() {
+  applyTheme(settings.theme);
+  // Update nav labels
+  document.querySelectorAll('.nav-item[data-page]').forEach(el => {
+    const page = el.dataset.page;
+    const label = el.querySelector('span') || el.lastChild;
+    const map = { global:'global', dashboard:'dashboard', ativos:'ativos', analise:'analise', adicionar:'adicionar', importar:'importar' };
+    if (map[page]) el.childNodes[el.childNodes.length-1].textContent = ' ' + t(map[page]);
+  });
+  document.getElementById('btn-refresh-all').textContent = '↻ ' + t('atualizar');
+  document.getElementById('btn-settings').innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> ${t('definicoes')}`;
+}
+
+function saveSettings() {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
+function openSettings() {
+  // Set current values
+  document.getElementById('settings-lang').value = settings.lang;
+  document.getElementById('settings-currency').value = settings.currency;
+  document.querySelectorAll('[data-theme]').forEach(b => b.classList.toggle('active', b.dataset.theme === settings.theme));
+  document.querySelectorAll('[data-numfmt]').forEach(b => b.classList.toggle('active', b.dataset.numfmt === settings.numfmt));
+  document.getElementById('settings-backdrop').style.display = 'flex';
+}
+
+document.getElementById('btn-settings').addEventListener('click', openSettings);
+document.getElementById('settings-close').addEventListener('click', () => { document.getElementById('settings-backdrop').style.display = 'none'; });
+document.getElementById('settings-backdrop').addEventListener('click', e => { if(e.target === document.getElementById('settings-backdrop')) document.getElementById('settings-backdrop').style.display = 'none'; });
+
+document.querySelectorAll('[data-theme]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('[data-theme]').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+}));
+document.querySelectorAll('[data-numfmt]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('[data-numfmt]').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+}));
+
+document.getElementById('settings-save').addEventListener('click', () => {
+  settings.theme    = document.querySelector('[data-theme].active')?.dataset.theme || 'dark';
+  settings.lang     = document.getElementById('settings-lang').value;
+  settings.currency = document.getElementById('settings-currency').value;
+  settings.numfmt   = document.querySelector('[data-numfmt].active')?.dataset.numfmt || 'pt';
+  saveSettings();
+  applySettings();
+  document.getElementById('settings-backdrop').style.display = 'none';
+  toast('✓ Definições guardadas');
+  renderDashboard();
+});
 
 // ── Firebase sync ─────────────────────────────────────────────────
 async function saveAll() {
@@ -116,8 +195,17 @@ window.addEventListener('load', () => {
 
 // ── Helpers ───────────────────────────────────────────────────────
 function uid() { return Math.random().toString(36).slice(2,10); }
-function fmt(n) { return '€'+Number(n).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function fmtPct(n) { return (n>=0?'+':'')+Number(n).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2})+'%'; }
+function fmt(n) {
+  const sym = currencySymbol();
+  const locales = { pt:'pt-PT', en:'en-GB', es:'es-ES', fr:'fr-FR', de:'de-DE', it:'it-IT', zh:'zh-CN', ja:'ja-JP', ar:'ar-SA', hi:'hi-IN', ch:'de-CH' };
+  const locale = locales[settings.numfmt] || 'pt-PT';
+  return sym + Number(n).toLocaleString(locale, {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtPct(n) {
+  const locales = { pt:'pt-PT', en:'en-GB', es:'es-ES', fr:'fr-FR', de:'de-DE', it:'it-IT', zh:'zh-CN', ja:'ja-JP', ar:'ar-SA', hi:'hi-IN', ch:'de-CH' };
+  const locale = locales[settings.numfmt] || 'pt-PT';
+  return (n>=0?'+':'')+Number(n).toLocaleString(locale, {minimumFractionDigits:2, maximumFractionDigits:2})+'%';
+}
 function getApiKey() { return localStorage.getItem(API_KEY_STORAGE)||''; }
 function askApiKey() {
   const k = window.prompt('Introduz a tua chave API da Anthropic (começa por sk-ant-):\n\nFica guardada apenas no teu browser.');
@@ -1285,6 +1373,7 @@ document.getElementById('mobile-refresh').addEventListener('click', () => {
 });
 
 // ── Init ──────────────────────────────────────────────────────────
+applySettings();
 migratePortfolios();
 toggleCashFields();
 renderSidebar();
