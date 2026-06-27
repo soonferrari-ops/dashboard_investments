@@ -1034,3 +1034,33 @@ select.input option { background: var(--bg2); color: var(--text); }
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
 }
+
+/* ── Mobile table rows ── */
+.mobile-row { padding: 10px 0 !important; }
+.mobile-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.mobile-row-left { display: flex; align-items: center; gap: 8px; }
+.mobile-row-right { text-align: right; }
+.mobile-row-bottom {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 2px;
+}
+@media (max-width: 640px) {
+  .dash-table thead { display: none; }
+  .dash-table tr { border-bottom: 1px solid var(--border); }
+  .dash-table td { border: none !important; }
+}
+
+/* ── Table horizontal scroll on mobile ── */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.table-scroll .table {
+  min-width: 600px;
+}
