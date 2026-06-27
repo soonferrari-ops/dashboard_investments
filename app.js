@@ -14,20 +14,31 @@ let settings = { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(SETTING
 
 const CURRENCY_SYMBOLS = { EUR:'€', USD:'$', GBP:'£', CHF:'₣', JPY:'¥', BRL:'R$', CAD:'C$', AUD:'A$', CNY:'¥', HKD:'HK$' };
 const TRANSLATIONS = {
-  pt: { global:'Global', dashboard:'Dashboard', ativos:'Ativos', analise:'Análise IA', adicionar:'Adicionar ativo', importar:'Importar screenshot', valorTotal:'Valor Total', ganhoPerda:'Ganho / Perda', custoBase:'Custo Base', cashDisp:'Cash Disponível', evolucao:'Evolução', alocacao:'Alocação', posicoes:'Posições', verTodas:'Ver todas →', agrupar:'Agrupar', atualizar:'Atualizar preços', definicoes:'Definições' },
-  en: { global:'Global', dashboard:'Dashboard', ativos:'Assets', analise:'AI Analysis', adicionar:'Add asset', importar:'Import screenshot', valorTotal:'Total Value', ganhoPerda:'Gain / Loss', custoBase:'Cost Basis', cashDisp:'Available Cash', evolucao:'Evolution', alocacao:'Allocation', posicoes:'Positions', verTodas:'See all →', agrupar:'Group', atualizar:'Update prices', definicoes:'Settings' },
-  es: { global:'Global', dashboard:'Dashboard', ativos:'Activos', analise:'Análisis IA', adicionar:'Añadir activo', importar:'Importar captura', valorTotal:'Valor Total', ganhoPerda:'Ganancia / Pérdida', custoBase:'Coste Base', cashDisp:'Efectivo Disponible', evolucao:'Evolución', alocacao:'Asignación', posicoes:'Posiciones', verTodas:'Ver todas →', agrupar:'Agrupar', atualizar:'Actualizar precios', definicoes:'Configuración' },
-  fr: { global:'Global', dashboard:'Tableau', ativos:'Actifs', analise:'Analyse IA', adicionar:'Ajouter actif', importar:'Importer capture', valorTotal:'Valeur Totale', ganhoPerda:'Gain / Perte', custoBase:'Coût de base', cashDisp:'Liquidités', evolucao:'Évolution', alocacao:'Allocation', posicoes:'Positions', verTodas:'Voir tout →', agrupar:'Grouper', atualizar:'Actualiser prix', definicoes:'Paramètres' },
-  de: { global:'Global', dashboard:'Dashboard', ativos:'Vermögen', analise:'KI-Analyse', adicionar:'Hinzufügen', importar:'Screenshot import', valorTotal:'Gesamtwert', ganhoPerda:'Gewinn / Verlust', custoBase:'Kostenbasis', cashDisp:'Bargeld', evolucao:'Entwicklung', alocacao:'Allokation', posicoes:'Positionen', verTodas:'Alle sehen →', agrupar:'Gruppieren', atualizar:'Preise aktualisieren', definicoes:'Einstellungen' },
-  it: { global:'Globale', dashboard:'Dashboard', ativos:'Attivi', analise:'Analisi IA', adicionar:'Aggiungi attivo', importar:'Importa screenshot', valorTotal:'Valore Totale', ganhoPerda:'Guadagno / Perdita', custoBase:'Costo Base', cashDisp:'Liquidità', evolucao:'Evoluzione', alocacao:'Allocazione', posicoes:'Posizioni', verTodas:'Vedi tutto →', agrupar:'Raggruppa', atualizar:'Aggiorna prezzi', definicoes:'Impostazioni' },
-  zh: { global:'全球', dashboard:'仪表板', ativos:'资产', analise:'AI分析', adicionar:'添加资产', importar:'导入截图', valorTotal:'总价值', ganhoPerda:'盈亏', custoBase:'成本基础', cashDisp:'可用现金', evolucao:'演变', alocacao:'分配', posicoes:'持仓', verTodas:'查看全部 →', agrupar:'分组', atualizar:'更新价格', definicoes:'设置' },
-  ja: { global:'グローバル', dashboard:'ダッシュボード', ativos:'資産', analise:'AI分析', adicionar:'資産追加', importar:'スクショ読込', valorTotal:'総資産', ganhoPerda:'損益', custoBase:'取得原価', cashDisp:'現金', evolucao:'推移', alocacao:'配分', posicoes:'ポジション', verTodas:'全て見る →', agrupar:'グループ', atualizar:'価格更新', definicoes:'設定' },
-  ar: { global:'عالمي', dashboard:'لوحة التحكم', ativos:'الأصول', analise:'تحليل AI', adicionar:'إضافة أصل', importar:'استيراد لقطة', valorTotal:'القيمة الإجمالية', ganhoPerda:'ربح / خسارة', custoBase:'التكلفة الأساسية', cashDisp:'النقد المتاح', evolucao:'التطور', alocacao:'التخصيص', posicoes:'المراكز', verTodas:'عرض الكل →', agrupar:'تجميع', atualizar:'تحديث الأسعار', definicoes:'الإعدادات' },
-  hi: { global:'वैश्विक', dashboard:'डैशबोर्ड', ativos:'संपत्ति', analise:'AI विश्लेषण', adicionar:'संपत्ति जोड़ें', importar:'स्क्रीनशॉट आयात', valorTotal:'कुल मूल्य', ganhoPerda:'लाभ / हानि', custoBase:'लागत आधार', cashDisp:'उपलब्ध नकद', evolucao:'विकास', alocacao:'आवंटन', posicoes:'पोजीशन', verTodas:'सभी देखें →', agrupar:'समूह', atualizar:'कीमतें अपडेट', definicoes:'सेटिंग्स' },
+  pt: { global:'Global', dashboard:'Dashboard', ativos:'Ativos', analise:'Análise IA', adicionar:'Adicionar ativo', importar:'Importar screenshot', valorTotal:'Valor total', ganhoPerda:'Ganho / Perda', custoBase:'Custo base', cashDisp:'Cash disponível', cashTotal:'Cash total', evolucao:'Evolução', alocacao:'Alocação', alocacaoTipo:'Alocação por tipo', posicoes:'Posições', verTodas:'Ver todas →', agrupar:'Agrupar', atualizar:'Atualizar preços', definicoes:'Definições', portfolios:'Portfolios', valorInvestido:'valor investido', globalSub:'Todos os portfolios consolidados', semDados:'Sem dados', reset:'Reset' },
+  en: { global:'Global', dashboard:'Dashboard', ativos:'Assets', analise:'AI Analysis', adicionar:'Add asset', importar:'Import screenshot', valorTotal:'Total value', ganhoPerda:'Gain / Loss', custoBase:'Cost basis', cashDisp:'Available cash', cashTotal:'Total cash', evolucao:'Evolution', alocacao:'Allocation', alocacaoTipo:'Allocation by type', posicoes:'Positions', verTodas:'See all →', agrupar:'Group', atualizar:'Update prices', definicoes:'Settings', portfolios:'Portfolios', valorInvestido:'invested value', globalSub:'All portfolios consolidated', semDados:'No data', reset:'Reset' },
+  es: { global:'Global', dashboard:'Dashboard', ativos:'Activos', analise:'Análisis IA', adicionar:'Añadir activo', importar:'Importar captura', valorTotal:'Valor total', ganhoPerda:'Ganancia / Pérdida', custoBase:'Coste base', cashDisp:'Efectivo disponible', cashTotal:'Total efectivo', evolucao:'Evolución', alocacao:'Asignación', alocacaoTipo:'Asignación por tipo', posicoes:'Posiciones', verTodas:'Ver todas →', agrupar:'Agrupar', atualizar:'Actualizar precios', definicoes:'Configuración', portfolios:'Carteras', valorInvestido:'valor invertido', globalSub:'Todas las carteras consolidadas', semDados:'Sin datos', reset:'Reset' },
+  fr: { global:'Global', dashboard:'Tableau', ativos:'Actifs', analise:'Analyse IA', adicionar:'Ajouter actif', importar:'Importer capture', valorTotal:'Valeur totale', ganhoPerda:'Gain / Perte', custoBase:'Coût de base', cashDisp:'Liquidités', cashTotal:'Total liquidités', evolucao:'Évolution', alocacao:'Allocation', alocacaoTipo:'Allocation par type', posicoes:'Positions', verTodas:'Voir tout →', agrupar:'Grouper', atualizar:'Actualiser prix', definicoes:'Paramètres', portfolios:'Portefeuilles', valorInvestido:'valeur investie', globalSub:'Tous les portefeuilles consolidés', semDados:'Pas de données', reset:'Reset' },
+  de: { global:'Global', dashboard:'Dashboard', ativos:'Vermögen', analise:'KI-Analyse', adicionar:'Hinzufügen', importar:'Screenshot import', valorTotal:'Gesamtwert', ganhoPerda:'Gewinn / Verlust', custoBase:'Kostenbasis', cashDisp:'Bargeld', cashTotal:'Gesamtbargeld', evolucao:'Entwicklung', alocacao:'Allokation', alocacaoTipo:'Allokation nach Typ', posicoes:'Positionen', verTodas:'Alle sehen →', agrupar:'Gruppieren', atualizar:'Preise aktualisieren', definicoes:'Einstellungen', portfolios:'Portfolios', valorInvestido:'investierter Wert', globalSub:'Alle Portfolios zusammengefasst', semDados:'Keine Daten', reset:'Reset' },
+  it: { global:'Globale', dashboard:'Dashboard', ativos:'Attivi', analise:'Analisi IA', adicionar:'Aggiungi attivo', importar:'Importa screenshot', valorTotal:'Valore totale', ganhoPerda:'Guadagno / Perdita', custoBase:'Costo base', cashDisp:'Liquidità', cashTotal:'Totale liquidità', evolucao:'Evoluzione', alocacao:'Allocazione', alocacaoTipo:'Allocazione per tipo', posicoes:'Posizioni', verTodas:'Vedi tutto →', agrupar:'Raggruppa', atualizar:'Aggiorna prezzi', definicoes:'Impostazioni', portfolios:'Portafogli', valorInvestido:'valore investito', globalSub:'Tutti i portafogli consolidati', semDados:'Nessun dato', reset:'Reset' },
+  zh: { global:'全球', dashboard:'仪表板', ativos:'资产', analise:'AI分析', adicionar:'添加资产', importar:'导入截图', valorTotal:'总价值', ganhoPerda:'盈亏', custoBase:'成本基础', cashDisp:'可用现金', cashTotal:'总现金', evolucao:'演变', alocacao:'分配', alocacaoTipo:'按类型分配', posicoes:'持仓', verTodas:'查看全部 →', agrupar:'分组', atualizar:'更新价格', definicoes:'设置', portfolios:'投资组合', valorInvestido:'投资价值', globalSub:'所有投资组合汇总', semDados:'无数据', reset:'重置' },
+  ja: { global:'グローバル', dashboard:'ダッシュボード', ativos:'資産', analise:'AI分析', adicionar:'資産追加', importar:'スクショ読込', valorTotal:'総資産', ganhoPerda:'損益', custoBase:'取得原価', cashDisp:'現金', cashTotal:'総現金', evolucao:'推移', alocacao:'配分', alocacaoTipo:'タイプ別配分', posicoes:'ポジション', verTodas:'全て見る →', agrupar:'グループ', atualizar:'価格更新', definicoes:'設定', portfolios:'ポートフォリオ', valorInvestido:'投資額', globalSub:'全ポートフォリオ統合', semDados:'データなし', reset:'リセット' },
+  ar: { global:'عالمي', dashboard:'لوحة التحكم', ativos:'الأصول', analise:'تحليل AI', adicionar:'إضافة أصل', importar:'استيراد لقطة', valorTotal:'القيمة الإجمالية', ganhoPerda:'ربح / خسارة', custoBase:'التكلفة الأساسية', cashDisp:'النقد المتاح', cashTotal:'إجمالي النقد', evolucao:'التطور', alocacao:'التخصيص', alocacaoTipo:'التخصيص حسب النوع', posicoes:'المراكز', verTodas:'عرض الكل →', agrupar:'تجميع', atualizar:'تحديث الأسعار', definicoes:'الإعدادات', portfolios:'المحافظ', valorInvestido:'القيمة المستثمرة', globalSub:'جميع المحافظ موحدة', semDados:'لا توجد بيانات', reset:'إعادة' },
+  hi: { global:'वैश्विक', dashboard:'डैशबोर्ड', ativos:'संपत्ति', analise:'AI विश्लेषण', adicionar:'संपत्ति जोड़ें', importar:'स्क्रीनशॉट आयात', valorTotal:'कुल मूल्य', ganhoPerda:'लाभ / हानि', custoBase:'लागत आधार', cashDisp:'उपलब्ध नकद', cashTotal:'कुल नकद', evolucao:'विकास', alocacao:'आवंटन', alocacaoTipo:'प्रकार के अनुसार', posicoes:'पोजीशन', verTodas:'सभी देखें →', agrupar:'समूह', atualizar:'कीमतें अपडेट', definicoes:'सेटिंग्स', portfolios:'पोर्टफोलियो', valorInvestido:'निवेश मूल्य', globalSub:'सभी पोर्टफोलियो', semDados:'कोई डेटा नहीं', reset:'रीसेट' },
 };
 
 function t(key) { return (TRANSLATIONS[settings.lang] || TRANSLATIONS.pt)[key] || key; }
 function currencySymbol() { return CURRENCY_SYMBOLS[settings.currency] || '€'; }
+
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  const globalSub = document.querySelector('#page-global .page-sub');
+  if (globalSub) globalSub.textContent = t('globalSub');
+  const activePage = document.querySelector('.nav-item.active')?.dataset.page || 'global';
+  const mobileTitle = document.getElementById('mobile-title');
+  if (mobileTitle) mobileTitle.textContent = t(activePage) || t('global');
+}
 
 function applyTheme(theme) {
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -37,15 +48,9 @@ function applyTheme(theme) {
 
 function applySettings() {
   applyTheme(settings.theme);
-  // Update nav labels
-  document.querySelectorAll('.nav-item[data-page]').forEach(el => {
-    const page = el.dataset.page;
-    const label = el.querySelector('span') || el.lastChild;
-    const map = { global:'global', dashboard:'dashboard', ativos:'ativos', analise:'analise', adicionar:'adicionar', importar:'importar' };
-    if (map[page]) el.childNodes[el.childNodes.length-1].textContent = ' ' + t(map[page]);
-  });
-  document.getElementById('btn-refresh-all').textContent = '↻ ' + t('atualizar');
-  document.getElementById('btn-settings').innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> ${t('definicoes')}`;
+  applyI18n();
+  document.getElementById('btn-refresh-all').innerHTML = '↻ ' + t('atualizar');
+  document.getElementById('btn-clear-key').innerHTML = '✕ Apagar chave IA';
 }
 
 function saveSettings() {
@@ -81,8 +86,9 @@ document.getElementById('settings-save').addEventListener('click', () => {
   settings.numfmt   = document.querySelector('[data-numfmt].active')?.dataset.numfmt || 'pt';
   saveSettings();
   applySettings();
+  applyI18n();
   document.getElementById('settings-backdrop').style.display = 'none';
-  toast('✓ Definições guardadas');
+  toast('✓ ' + t('definicoes'));
   renderDashboard();
 });
 

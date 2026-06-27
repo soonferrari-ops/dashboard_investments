@@ -132,33 +132,33 @@
       </header>
       <div class="metrics-grid">
         <div class="metric-card accent">
-          <div class="metric-label">Valor total</div>
+          <div class="metric-label" data-i18n="valorTotal">Valor total</div>
           <div class="metric-value" id="g-total">€0,00</div>
           <div class="metric-trend" id="g-total-sub">0 portfolios</div>
         </div>
         <div class="metric-card">
-          <div class="metric-label">Ganho / Perda</div>
+          <div class="metric-label" data-i18n="ganhoPerda">Ganho / Perda</div>
           <div class="metric-value" id="g-gl">€0,00</div>
           <div class="metric-trend" id="g-gl-pct">—</div>
         </div>
         <div class="metric-card">
-          <div class="metric-label">Custo base</div>
+          <div class="metric-label" data-i18n="custoBase">Custo base</div>
           <div class="metric-value" id="g-custo">€0,00</div>
-          <div class="metric-trend">valor investido</div>
+          <div class="metric-trend" data-i18n="valorInvestido">valor investido</div>
         </div>
         <div class="metric-card">
-          <div class="metric-label">Cash total</div>
+          <div class="metric-label" data-i18n="cashTotal">Cash total</div>
           <div class="metric-value" id="g-cash">€0,00</div>
           <div class="metric-trend" id="g-cash-pct">—</div>
         </div>
       </div>
       <div class="charts-row">
         <div class="card chart-card">
-          <div class="card-header"><span class="card-title">Portfolios</span></div>
+          <div class="card-header"><span class="card-title" data-i18n="portfolios">Portfolios</span></div>
           <div id="global-portfolios-list"></div>
         </div>
         <div class="card chart-card chart-card--sm">
-          <div class="card-header"><span class="card-title">Alocação por tipo</span></div>
+          <div class="card-header"><span class="card-title" data-i18n="alocacaoTipo">Alocação por tipo</span></div>
           <div class="chart-wrap donut-wrap">
             <canvas id="globalPieChart"></canvas>
             <div class="donut-center" id="global-donut-label">—</div>
@@ -202,7 +202,7 @@
       <div class="charts-row">
         <div class="card chart-card">
           <div class="card-header">
-            <span class="card-title">Evolução</span>
+            <span class="card-title" data-i18n="evolucao">Evolução</span>
             <div style="display:flex;align-items:center;gap:8px">
               <div class="chart-tabs">
                 <button class="chart-tab active" data-period="1m">1M</button>
@@ -219,7 +219,7 @@
           </div>
         </div>
         <div class="card chart-card chart-card--sm">
-          <div class="card-header"><span class="card-title">Alocação</span></div>
+          <div class="card-header"><span class="card-title" data-i18n="alocacao">Alocação</span></div>
           <div class="chart-wrap donut-wrap">
             <canvas id="pieChart"></canvas>
             <div class="donut-center" id="donut-label">—</div>
@@ -230,14 +230,14 @@
       </div>
       <div class="card">
         <div class="card-header">
-          <span class="card-title">Posições</span>
+          <span class="card-title" data-i18n="posicoes">Posições</span>
           <div style="display:flex;align-items:center;gap:16px">
             <label class="toggle-switch" title="Agrupar posições com o mesmo ticker">
               <input type="checkbox" id="toggle-agrupar-dash" />
               <span class="toggle-track"><span class="toggle-thumb"></span></span>
-              <span class="toggle-label">Agrupar</span>
+              <span class="toggle-label" data-i18n="agrupar">Agrupar</span>
             </label>
-            <a href="#" class="card-link" data-page="ativos">Ver todas →</a>
+            <a href="#" class="card-link" data-page="ativos"><a href="#" class="card-link" data-page="ativos" data-i18n="verTodas">Ver todas →</a>
           </div>
         </div>
         <div class="empty-state" id="dash-empty"><p>Ainda não tens ativos.<br><a href="#" class="link" data-page="adicionar">Adiciona o primeiro →</a></p></div>
@@ -271,7 +271,7 @@
           <label class="toggle-switch" title="Agrupar posições com o mesmo ticker">
             <input type="checkbox" id="toggle-agrupar" />
             <span class="toggle-track"><span class="toggle-thumb"></span></span>
-            <span class="toggle-label">Agrupar</span>
+            <span class="toggle-label" data-i18n="agrupar">Agrupar</span>
           </label>
           <button class="btn btn-primary" data-page="adicionar">+ Adicionar</button>
         </div>
