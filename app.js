@@ -1395,6 +1395,38 @@ function hideImportAC(i){
 
 document.getElementById('btn-import-guardar').addEventListener('click', async function() {
   if(!importPositions||importPositions.length===0) return;
+
+  // Verificar se há tickers vazios em linhas não ignoradas
+  const tickersInvalidos = [];
+  for(let i=0;i<importPositions.length;i++){
+    const skipBtn=document.querySelector('[data-skip="'+i+'"]');
+    if(skipBtn?.classList.contains('skipped')) continue;
+    const tickerVal=document.getElementById('imp-ticker-'+i)?.value.trim();
+    if(!tickerVal) tickersInvalidos.push(i);
+  }
+  if(tickersInvalidos.length>0){
+    // Destacar os inputs inválidos com shake suave
+    tickersInvalidos.forEach(i=>{
+      const inp=document.getElementById('imp-ticker-'+i);
+      if(!inp) return;
+      inp.focus();
+      inp.style.transition='box-shadow 0.15s';
+      inp.style.boxShadow='0 0 0 2px var(--neg)';
+      setTimeout(()=>{ inp.style.boxShadow=''; },1200);
+    });
+    // Scroll para o aviso e fazer flash
+    const avisoEl=document.getElementById('etf-ticker-warning');
+    if(avisoEl){
+      avisoEl.scrollIntoView({behavior:'smooth',block:'center'});
+      avisoEl.classList.remove('flash');
+      void avisoEl.offsetWidth; // forçar reflow para reiniciar animação
+      avisoEl.classList.add('flash');
+      avisoEl.addEventListener('animationend',()=>avisoEl.classList.remove('flash'),{once:true});
+    }
+    toast('⚠️ Preenche os tickers assinalados antes de guardar');
+    return;
+  }
+
   const btn=document.getElementById('btn-import-guardar');
   btn.textContent='A guardar...';
   let saved=0,skipped=0;

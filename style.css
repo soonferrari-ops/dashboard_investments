@@ -1139,3 +1139,16 @@ select.input option { background: var(--bg2); color: var(--text); }
 }
 .btn-find-ticker:hover { border-color: var(--accent); color: var(--accent); }
 .btn-find-ticker:disabled { opacity: 0.5; cursor: wait; }
+
+/* ── Aviso ETF flash ───────────────────────────────────────────── */
+@keyframes etf-warning-flash {
+  0%   { background: rgba(230,161,64,0.10); box-shadow: none; }
+  20%  { background: rgba(230,161,64,0.45); box-shadow: 0 0 0 3px rgba(230,161,64,0.55); }
+  45%  { background: rgba(230,161,64,0.10); box-shadow: none; }
+  65%  { background: rgba(230,161,64,0.40); box-shadow: 0 0 0 3px rgba(230,161,64,0.50); }
+  85%  { background: rgba(230,161,64,0.10); box-shadow: none; }
+  100% { background: rgba(230,161,64,0.10); box-shadow: none; }
+}
+#etf-ticker-warning.flash {
+  animation: etf-warning-flash 0.85s ease-in-out;
+}
