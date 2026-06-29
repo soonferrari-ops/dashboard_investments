@@ -1125,3 +1125,17 @@ select.input option { background: var(--bg2); color: var(--text); }
   --pos: #1a9e5c;
   --neg: #e05c5c;
 }
+
+/* ── Import find ticker button ── */
+.btn-find-ticker {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-find-ticker:hover { border-color: var(--accent); color: var(--accent); }
+.btn-find-ticker:disabled { opacity: 0.5; cursor: wait; }

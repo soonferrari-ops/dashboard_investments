@@ -1227,26 +1227,33 @@ document.getElementById('btn-importar-analisar').addEventListener('click', async
   const aiPrompt = [
     'Analisa esta screenshot de ' + selectedBroker + ' e extrai TODAS as posicoes de investimento.',
     '',
-    'Formato de resposta - JSON array apenas:',
+    'Formato de resposta - JSON array apenas, sem texto antes ou depois:',
     '[{"ticker":"NOK","nome":"Nokia","tipo":"Acao","qty":2525,"precoMedio":11.87,"moeda":"EUR"}]',
+    '',
+    'REGRAS CRITICAS PARA O TICKER:',
+    '1. Se o ticker estiver VISIVELMENTE na imagem (ex: "NOK", "AAPL", "NQSE.DE"), usa-o exatamente como aparece.',
+    '2. Se so aparecer o NOME do ETF/ativo mas NAO o ticker, deixa ticker=""  (string vazia).',
+    '3. NUNCA inventes ou adivinhes tickers. Se nao tiveres a certeza absoluta, deixa vazio.',
+    '4. Exemplos de tickers visiveis: NOK, IQE.L, LPK.DE, BTC-USD, VWCE, AAPL',
+    '5. Exemplos onde deves deixar vazio: "NASDAQ 100 ETF", "Semiconductor ETF", "Europe Defence cc"',
     '',
     'COMO CALCULAR O PRECO MEDIO:',
     'A imagem mostra: quantidade, valor atual em euros, e ganho/perda em euros e percentagem.',
     'Formula: precoMedio = (valorAtual - ganhoEuros) / quantidade',
-    'Exemplo LPKF: valor=40050, ganho=+16265.63, qty=1500 -> precoMedio = (40050-16265.63)/1500 = 15.86',
-    'Exemplo Nokia: valor=29897.83, ganho=-276.30, qty=2525 -> precoMedio = (29897.83-(-276.30))/2525 = 11.95',
+    'Exemplo Nokia: valor=29897, ganho=-276, qty=2525 -> precoMedio = (29897-(-276))/2525 = 11.95',
     '',
-    'SUFIXOS DE BOLSA:',
-    '- Acoes americanas NASDAQ/NYSE: sem sufixo (OUST, HLIT, ALMU, MRAM)',
+    'SUFIXOS DE BOLSA (so se o ticker estiver visivel):',
+    '- Acoes americanas NASDAQ/NYSE: sem sufixo (OUST, AAPL, NOK)',
     '- LSE Londres: .L (IQE.L)',
-    '- Frankfurt/XETRA/FWB2: .DE (LPK.DE, 7H6.DE)',
-    '- Nokia e cotada em NASDAQ como NOK (nao NOKIA.HE)',
-    '- T1 Energy ticker e TE',
+    '- Frankfurt/XETRA: .DE (LPK.DE)',
     '',
-    'CAMPOS:',
-    '- tipo: sempre "Acao" para acoes',
-    '- moeda: EUR para Trading212, USD para acoes americanas',
-    '- Devolve APENAS o JSON array, sem texto, sem markdown'
+    'TIPO:',
+    '- "Acao" para acoes individuais',
+    '- "ETF" para ETFs e fundos',
+    '- "Cripto" para criptomoedas',
+    '- "Cash" para dinheiro/depositos',
+    '',
+    'Devolve APENAS o JSON array, sem texto, sem markdown, sem explicacoes.'
   ].join('\n');
 
   try {
@@ -1278,15 +1285,87 @@ document.getElementById('btn-importar-analisar').addEventListener('click', async
   }
 });
 
+async function findTickerForImport(nome, precoMedio, idx) {
+  const btn = document.querySelector(`[data-find="${idx}"]`);
+  const input = document.getElementById(`imp-ticker-${idx}`);
+  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+
+  try {
+    // Search by name
+    const results = await searchTickerAutocomplete(nome);
+    if (!results || results.length === 0) {
+      if (btn) { btn.textContent = '❌'; btn.disabled = false; }
+      return;
+    }
+
+    // If we have a price, try to match by fetching the price of top candidates
+    if (precoMedio && precoMedio > 0) {
+      for (const r of results.slice(0, 4)) {
+        try {
+          const price = await fetchPriceRaw(r.symbol);
+          if (price && precoMedio) {
+            // Check if price is within 30% of our avg price (accounting for time difference)
+            const ratio = price / precoMedio;
+            if (ratio > 0.5 && ratio < 2.0) {
+              input.value = r.symbol;
+              input.style.borderColor = 'var(--pos)';
+              input.style.background = 'rgba(76,175,130,0.08)';
+              input.title = `${r.shortname} (${r.exchDisp}) — preço atual: €${price.toFixed(2)}`;
+              if (btn) { btn.textContent = '✓'; btn.style.color = 'var(--pos)'; }
+              return;
+            }
+          }
+        } catch {}
+      }
+    }
+
+    // No price match — show best result anyway
+    const best = results[0];
+    input.value = best.symbol;
+    input.style.borderColor = 'var(--accent)';
+    input.title = `${best.shortname} (${best.exchDisp}) — confirma se está correto`;
+    if (btn) { btn.textContent = '?'; btn.style.color = 'var(--accent)'; btn.disabled = false; }
+  } catch (e) {
+    if (btn) { btn.textContent = '🔍'; btn.disabled = false; }
+  }
+}
+
 function renderImportTable(positions) {
   const wrap=document.getElementById('import-table-wrap'),title=document.getElementById('import-result-title');
   if(!positions||positions.length===0){wrap.innerHTML='<div class="empty-state"><p>'+t('nenhumaDetetada')+'<br>'+t('tentaImagem')+'</p></div>';title.textContent=t('nenhumaDetetada');return;}
   title.textContent=positions.length+' '+t('posDetected');
-  wrap.innerHTML='<div class="table-scroll"><table class="import-table"><thead><tr><th>Ticker</th><th>'+t('nome')+'</th><th>'+t('thTipo')+'</th><th>'+t('thQtd')+'</th><th>'+t('precoMedio')+'</th><th>'+t('moedaCompra')+'</th><th></th></tr></thead><tbody>'+positions.map((p,i)=>'<tr id="import-row-'+i+'"><td><input class="input" id="imp-ticker-'+i+'" value="'+(p.ticker||'')+'" style="width:80px" autocomplete="off"/></td><td><input class="input" id="imp-nome-'+i+'" value="'+(p.nome||'')+'" style="width:140px"/></td><td><select class="input" id="imp-tipo-'+i+'" style="width:90px"><option value="Ação" '+(p.tipo==='Ação'||p.tipo==='Acao'?'selected':'')+'>Ação</option><option value="ETF" '+(p.tipo==='ETF'?'selected':'')+'>ETF</option><option value="Cripto" '+(p.tipo==='Cripto'?'selected':'')+'>Cripto</option><option value="Cash" '+(p.tipo==='Cash'?'selected':'')+'>Cash</option></select></td><td><input class="input" id="imp-qty-'+i+'" value="'+(p.qty||'')+'" type="number" step="any" style="width:80px"/></td><td><input class="input" id="imp-pm-'+i+'" value="'+(p.precoMedio||'')+'" type="number" step="any" style="width:90px"/></td><td><select class="input" id="imp-moeda-'+i+'" style="width:80px">'+['EUR','USD','GBP','GBX','JPY','CHF','CAD','AUD','BRL','SEK','NOK','DKK','HKD','SGD','CNY'].map(m=>'<option value="'+m+'" '+((p.moeda||'EUR')===m?'selected':'')+'>'+m+'</option>').join('')+'</select></td><td><button class="btn-skip" data-skip="'+i+'">'+t('ignorar')+'</button></td></tr>').join('')+'</tbody></table></div>';
+  const emptyTickers = positions.filter(p => !p.ticker).length;
+  if (emptyTickers > 0) {
+    title.textContent += ' · ⚠️ ' + emptyTickers + ' ticker(s) por preencher';
+  }
+  wrap.innerHTML='<div class="table-scroll"><table class="import-table"><thead><tr><th>Ticker</th><th>'+t('nome')+'</th><th>'+t('thTipo')+'</th><th>'+t('thQtd')+'</th><th>'+t('precoMedio')+'</th><th>'+t('moedaCompra')+'</th><th></th></tr></thead><tbody>'+positions.map((p,i)=>{
+    const tickerEmpty = !p.ticker;
+    const tickerStyle = tickerEmpty ? 'width:80px;border-color:var(--neg);background:rgba(224,92,92,0.08)' : 'width:80px';
+    const tickerPlaceholder = tickerEmpty ? '⚠️ ticker?' : '';
+    const searchBtn = tickerEmpty ? `<button class="btn-find-ticker" data-find="${i}" title="Procurar ticker automaticamente" style="font-size:11px;padding:4px 8px;margin-left:4px">🔍</button>` : '';
+    return '<tr id="import-row-'+i+'"><td style="display:flex;align-items:center;gap:4px"><input class="input" id="imp-ticker-'+i+'" value="'+(p.ticker||'')+'" style="'+tickerStyle+'" placeholder="'+tickerPlaceholder+'" autocomplete="off" title="'+(tickerEmpty?'Ticker não encontrado na imagem — preenche manualmente':'')+'"/>'+searchBtn+'</td><td><input class="input" id="imp-nome-'+i+'" value="'+(p.nome||'')+'" style="width:140px"/></td><td><select class="input" id="imp-tipo-'+i+'" style="width:90px"><option value="Ação" '+(p.tipo==='Ação'||p.tipo==='Acao'?'selected':'')+'>Ação</option><option value="ETF" '+(p.tipo==='ETF'?'selected':'')+'>ETF</option><option value="Cripto" '+(p.tipo==='Cripto'?'selected':'')+'>Cripto</option><option value="Cash" '+(p.tipo==='Cash'?'selected':'')+'>Cash</option></select></td><td><input class="input" id="imp-qty-'+i+'" value="'+(p.qty||'')+'" type="number" step="any" style="width:80px"/></td><td><input class="input" id="imp-pm-'+i+'" value="'+(p.precoMedio||'')+'" type="number" step="any" style="width:90px"/></td><td><select class="input" id="imp-moeda-'+i+'" style="width:80px">'+['EUR','USD','GBP','GBX','JPY','CHF','CAD','AUD','BRL','SEK','NOK','DKK','HKD','SGD','CNY'].map(m=>'<option value="'+m+'" '+((p.moeda||'EUR')===m?'selected':'')+'>'+m+'</option>').join('')+'</select></td><td><button class="btn-skip" data-skip="'+i+'">'+t('ignorar')+'</button></td></tr>';
+  }).join('')+'</tbody></table></div>';
   document.querySelectorAll('[data-skip]').forEach(btn=>btn.addEventListener('click',function(){
     const i=btn.dataset.skip,row=document.getElementById('import-row-'+i);
-    if(btn.classList.contains('skipped')){btn.classList.remove('skipped');btn.textContent='Ignorar';row.classList.remove('import-row-skip');}
-    else{btn.classList.add('skipped');btn.textContent='Ignorado';row.classList.add('import-row-skip');}
+    if(btn.classList.contains('skipped')){btn.classList.remove('skipped');btn.textContent=t('ignorar');row.classList.remove('import-row-skip');}
+    else{btn.classList.add('skipped');btn.textContent=t('ignorado')||'✓';row.classList.add('import-row-skip');}
+  }));
+  // Auto-search all empty tickers
+  const emptyRows = positions.map((p,i)=>({p,i})).filter(({p})=>!p.ticker);
+  if(emptyRows.length > 0) {
+    // Search sequentially to avoid overwhelming the API
+    (async () => {
+      for(const {p, i} of emptyRows) {
+        await findTickerForImport(p.nome, p.precoMedio, i);
+        await new Promise(r => setTimeout(r, 300));
+      }
+    })();
+  }
+  document.querySelectorAll('[data-find]').forEach(btn=>btn.addEventListener('click',function(){
+    const i=btn.dataset.find;
+    const nome=document.getElementById('imp-nome-'+i)?.value||'';
+    const pm=parseFloat(document.getElementById('imp-pm-'+i)?.value)||0;
+    findTickerForImport(nome,pm,i);
   }));
   positions.forEach((p,i)=>{
     const input=document.getElementById('imp-ticker-'+i);
