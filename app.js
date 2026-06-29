@@ -1342,30 +1342,12 @@ function renderImportTable(positions) {
     const tickerEmpty = !p.ticker;
     const tickerStyle = tickerEmpty ? 'width:80px;border-color:var(--neg);background:rgba(224,92,92,0.08)' : 'width:80px';
     const tickerPlaceholder = tickerEmpty ? '⚠️ ticker?' : '';
-    const searchBtn = tickerEmpty ? `<button class="btn-find-ticker" data-find="${i}" title="Procurar ticker automaticamente" style="font-size:11px;padding:4px 8px;margin-left:4px">🔍</button>` : '';
-    return '<tr id="import-row-'+i+'"><td style="display:flex;align-items:center;gap:4px"><input class="input" id="imp-ticker-'+i+'" value="'+(p.ticker||'')+'" style="'+tickerStyle+'" placeholder="'+tickerPlaceholder+'" autocomplete="off" title="'+(tickerEmpty?'Ticker não encontrado na imagem — preenche manualmente':'')+'"/>'+searchBtn+'</td><td><input class="input" id="imp-nome-'+i+'" value="'+(p.nome||'')+'" style="width:140px"/></td><td><select class="input" id="imp-tipo-'+i+'" style="width:90px"><option value="Ação" '+(p.tipo==='Ação'||p.tipo==='Acao'?'selected':'')+'>Ação</option><option value="ETF" '+(p.tipo==='ETF'?'selected':'')+'>ETF</option><option value="Cripto" '+(p.tipo==='Cripto'?'selected':'')+'>Cripto</option><option value="Cash" '+(p.tipo==='Cash'?'selected':'')+'>Cash</option></select></td><td><input class="input" id="imp-qty-'+i+'" value="'+(p.qty||'')+'" type="number" step="any" style="width:80px"/></td><td><input class="input" id="imp-pm-'+i+'" value="'+(p.precoMedio||'')+'" type="number" step="any" style="width:90px"/></td><td><select class="input" id="imp-moeda-'+i+'" style="width:80px">'+['EUR','USD','GBP','GBX','JPY','CHF','CAD','AUD','BRL','SEK','NOK','DKK','HKD','SGD','CNY'].map(m=>'<option value="'+m+'" '+((p.moeda||'EUR')===m?'selected':'')+'>'+m+'</option>').join('')+'</select></td><td><button class="btn-skip" data-skip="'+i+'">'+t('ignorar')+'</button></td></tr>';
+    return '<tr id="import-row-'+i+'"><td><input class="input" id="imp-ticker-'+i+'" value="'+(p.ticker||'')+'" style="'+tickerStyle+'" placeholder="'+tickerPlaceholder+'" autocomplete="off" title="'+(tickerEmpty?'Ticker não encontrado — preenche manualmente':'')+'"/></td><td><input class="input" id="imp-nome-'+i+'" value="'+(p.nome||'')+'" style="width:140px"/></td><td><select class="input" id="imp-tipo-'+i+'" style="width:90px"><option value="Ação" '+(p.tipo==='Ação'||p.tipo==='Acao'?'selected':'')+'>Ação</option><option value="ETF" '+(p.tipo==='ETF'?'selected':'')+'>ETF</option><option value="Cripto" '+(p.tipo==='Cripto'?'selected':'')+'>Cripto</option><option value="Cash" '+(p.tipo==='Cash'?'selected':'')+'>Cash</option></select></td><td><input class="input" id="imp-qty-'+i+'" value="'+(p.qty||'')+'" type="number" step="any" style="width:80px"/></td><td><input class="input" id="imp-pm-'+i+'" value="'+(p.precoMedio||'')+'" type="number" step="any" style="width:90px"/></td><td><select class="input" id="imp-moeda-'+i+'" style="width:80px">'+['EUR','USD','GBP','GBX','JPY','CHF','CAD','AUD','BRL','SEK','NOK','DKK','HKD','SGD','CNY'].map(m=>'<option value="'+m+'" '+((p.moeda||'EUR')===m?'selected':'')+'>'+m+'</option>').join('')+'</select></td><td><button class="btn-skip" data-skip="'+i+'">'+t('ignorar')+'</button></td></tr>';
   }).join('')+'</tbody></table></div>';
   document.querySelectorAll('[data-skip]').forEach(btn=>btn.addEventListener('click',function(){
     const i=btn.dataset.skip,row=document.getElementById('import-row-'+i);
     if(btn.classList.contains('skipped')){btn.classList.remove('skipped');btn.textContent=t('ignorar');row.classList.remove('import-row-skip');}
-    else{btn.classList.add('skipped');btn.textContent=t('ignorado')||'✓';row.classList.add('import-row-skip');}
-  }));
-  // Auto-search all empty tickers
-  const emptyRows = positions.map((p,i)=>({p,i})).filter(({p})=>!p.ticker);
-  if(emptyRows.length > 0) {
-    // Search sequentially to avoid overwhelming the API
-    (async () => {
-      for(const {p, i} of emptyRows) {
-        await findTickerForImport(p.nome, p.precoMedio, i);
-        await new Promise(r => setTimeout(r, 300));
-      }
-    })();
-  }
-  document.querySelectorAll('[data-find]').forEach(btn=>btn.addEventListener('click',function(){
-    const i=btn.dataset.find;
-    const nome=document.getElementById('imp-nome-'+i)?.value||'';
-    const pm=parseFloat(document.getElementById('imp-pm-'+i)?.value)||0;
-    findTickerForImport(nome,pm,i);
+    else{btn.classList.add('skipped');btn.textContent='✓';row.classList.add('import-row-skip');}
   }));
   positions.forEach((p,i)=>{
     const input=document.getElementById('imp-ticker-'+i);

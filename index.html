@@ -304,7 +304,7 @@
           </div>
           <button class="btn btn-primary" id="btn-analisar" data-i18n="analisarAgora">Analisar agora</button>
         </div>
-        <div id="ai-empty" class="empty-state"><p>Clica em "Analisar agora" para uma análise detalhada.<br>A IA avalia diversificação, riscos e oportunidades.</p></div>
+        <div id="ai-empty" class="empty-state"><p id="ai-empty-text" data-i18n="aiEmptyText">Clica em "Analisar agora" para uma análise detalhada.<br>A IA avalia diversificação, riscos e oportunidades.</p></div>
         <div id="ai-loading" style="display:none" class="ai-loading"><div class="ai-spinner"></div><span data-i18n="analisando">A analisar o teu portfolio...</span></div>
         <div id="ai-result" style="display:none" class="ai-result"></div>
       </div>
@@ -367,11 +367,11 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="label" for="f-preco-medio">Preço médio <span id="label-moeda-compra" style="color:var(--accent);font-weight:600">€</span></label>
+            <label class="label" for="f-preco-medio"><span data-i18n="precoMedio">Preço médio</span> <span id="label-moeda-compra" style="color:var(--accent);font-weight:600">€</span></label>
             <input class="input" id="f-preco-medio" type="number" step="any" placeholder="ex: 150,00" />
           </div>
           <div class="form-group">
-            <label class="label" for="f-preco-atual">Preço atual (€)</label>
+            <label class="label" for="f-preco-atual" data-i18n="precoAtualEur">Preço atual (€)</label>
             <input class="input" id="f-preco-atual" type="number" step="any" placeholder="auto ou manual" />
           </div>
         </div>
@@ -431,6 +431,12 @@
         <div id="img-preview-wrap" style="display:none;margin-top:16px">
           <img id="img-preview" style="max-width:100%;border-radius:8px;border:1px solid var(--border)" />
           <button class="btn btn-ghost" id="btn-nova-imagem" style="margin-top:10px;font-size:12px" data-i18n="removerImagem">✕ Remover imagem</button>
+        </div>
+
+        <!-- Aviso ETF -->
+        <div style="margin-top:14px;padding:12px 14px;background:rgba(230,161,64,0.1);border:1px solid rgba(230,161,64,0.3);border-radius:8px;font-size:12px;color:var(--text2);line-height:1.5">
+          <span style="color:#e6a140;font-weight:600">⚠️ ETFs e tickers</span><br>
+          A IA extrai quantidades e preços mas <strong>pode não saber o ticker correto</strong> de ETFs (ex: NQSE.DE, CNDX, VWCE). Verifica e corrige os tickers assinalados a vermelho antes de guardar.
         </div>
 
         <!-- Botão analisar -->
