@@ -571,6 +571,7 @@ function showPage(id) {
   if (page) page.classList.add('active');
   const nav = document.querySelector(`.nav-item[data-page="${id}"]`);
   if (nav) nav.classList.add('active');
+  applyI18n();
   if (id==='global')    setTimeout(renderGlobal, 10);
   if (id==='dashboard') renderDashboard();
   if (id==='ativos')    renderAtivos();
