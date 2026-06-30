@@ -1,4 +1,4 @@
-const CACHE = 'portfolio-v7';
+const CACHE = 'portfolio-v8';
 const ASSETS = [
   '/dashboard_investments/',
   '/dashboard_investments/index.html',
